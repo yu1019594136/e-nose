@@ -12,6 +12,7 @@
 #include <error.h>
 
 #include <QApplication>
+#include <QTextCodec>
 #include <QDebug>
 #include "mainwindow.h"
 

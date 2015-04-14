@@ -5,32 +5,72 @@
 #include "ui_mainwindow.h"
 #include "ds18b20.h"
 
-MyThread::MyThread(QObject *parent) :
+/*********************逻辑控制线程*****************************/
+LogicControlThread::LogicControlThread(QObject *parent) :
     QThread(parent)
 {
     stopped = false;
 }
 
-void MyThread::run()
+void LogicControlThread::run()
 {
-    char ds18b20_temp_str[]="00.000";
-    QString temp;
+//    while (!stopped)
+//    {
+        dosomething();
+//    }
 
-    while(!stopped)
-    {
-        DS18B20_Get_TempString("28-0000025ff821", ds18b20_temp_str);
-        temp = ds18b20_temp_str;
-        emit send_ds18b20_temp(temp);
-        //msleep(500);
-    }
+    stopped = false;
+}
+void LogicControlThread::stop()
+{
+    stopped = true;
+}
+/*********************硬件控制线程*****************************/
+HardWareControlThread::HardWareControlThread(QObject *parent) :
+    QThread(parent)
+{
+    stopped = false;
+}
 
-    /* 线程停止后再显示回原来的"DS18B20 TEMP" */
-    emit send_ds18b20_temp("DS18B20 TEMP");
+void HardWareControlThread::run()
+{
+//    while (!stopped)
+//    {
+        dosomething();
+//    }
 
     stopped = false;
 }
 
-void MyThread::stop()
+void HardWareControlThread::stop()
 {
     stopped = true;
+}
+
+/*********************数据处理线程*****************************/
+DataProcessThread::DataProcessThread(QObject *parent) :
+    QThread(parent)
+{
+    stopped = false;
+}
+
+void DataProcessThread::run()
+{
+//    while (!stopped)
+//    {
+        dosomething();
+//    }
+
+    stopped = false;
+}
+
+void DataProcessThread::stop()
+{
+    stopped = true;
+}
+
+/*********************dosomething()*****************************/
+void dosomething()
+{
+    qDebug() << "I,am do something!" << endl;
 }
