@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/">
+        <file>480X272像素2.jpg</file>
+        <file>480X272像素3.jpg</file>
+        <file>image.qrc</file>
+        <file>Lcd_backround_images.qrc</file>
+        <file>电子鼻LCD背景图片1.jpg</file>
+        <file>电子鼻LCD背景图片2.jpg</file>
+        <file>电子鼻LCD背景图片3.jpg</file>
+    </qresource>
+</RCC>

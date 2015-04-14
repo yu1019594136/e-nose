@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>551</width>
+    <height>291</height>
+   </rect>
+  </property>
+  <property name="cursor">
+   <cursorShape>SizeAllCursor</cursorShape>
+  </property>
+  <property name="windowTitle">
+   <string>e-nose</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">#MainWindow{
+	background-image: url(:/480X272像素3.jpg);
+	color: rgb(208, 237, 217);
+}
+
+</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QPushButton" name="Quit_Button">
+    <property name="geometry">
+     <rect>
+      <x>30</x>
+      <y>230</y>
+      <width>99</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Quit</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="star_heat">
+    <property name="geometry">
+     <rect>
+      <x>51</x>
+      <y>72</y>
+      <width>113</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>start pre-heat</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="stop_heat">
+    <property name="enabled">
+     <bool>false</bool>
+    </property>
+    <property name="geometry">
+     <rect>
+      <x>174</x>
+      <y>72</y>
+      <width>111</width>
+      <height>27</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>stop pre-heat</string>
+    </property>
+   </widget>
+   <widget class="QWidget" name="layoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>50</x>
+      <y>140</y>
+      <width>258</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <widget class="QPushButton" name="start_timer_Button">
+       <property name="text">
+        <string>start timer_test</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="stop_timer_Button">
+       <property name="enabled">
+        <bool>false</bool>
+       </property>
+       <property name="text">
+        <string>stop timer_test</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+   <widget class="QLabel" name="show_temp">
+    <property name="geometry">
+     <rect>
+      <x>330</x>
+      <y>70</y>
+      <width>131</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>TextLabel</string>
+    </property>
+   </widget>
+  </widget>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <resources/>
+ <connections/>
+</ui>
