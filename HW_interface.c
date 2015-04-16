@@ -119,7 +119,7 @@ void system_init(void)
 //    PWM_Init(&pwm_9_42_zhenfashi);
 
     /* sht21初始化 */
-    sht21_init();
+    //sht21_init();
 }
 
 //Switch = OPEN,表示打开;Switch = CLOSE,表示关闭
@@ -316,7 +316,7 @@ void system_shutdown(void)
 //    pwm_close(&pwm_9_42_zhenfashi);
 
     /* 关闭sht21设备文件句柄 */
-    sht21_close();
+    //sht21_close();
 
 //    Application_quit(5);//5秒钟后关机
 }

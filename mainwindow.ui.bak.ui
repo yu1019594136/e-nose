@@ -46,7 +46,7 @@
      <cursorShape>BlankCursor</cursorShape>
     </property>
     <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
+     <enum>Qt::StrongFocus</enum>
     </property>
     <property name="layoutDirection">
      <enum>Qt::LeftToRight</enum>
@@ -80,7 +80,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>evaporation temp:</string>
@@ -99,7 +99,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>reaction temp:</string>
@@ -118,7 +118,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>reaction humidity:</string>
@@ -137,7 +137,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>temp_value</string>
@@ -156,7 +156,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>temp_value1</string>
@@ -175,7 +175,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>humdy_value</string>
@@ -194,7 +194,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>M1 status:</string>
@@ -213,7 +213,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>M2 status:</string>
@@ -251,7 +251,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>M4 status:</string>
@@ -270,7 +270,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>OFF</string>
@@ -289,7 +289,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>OFF</string>
@@ -308,7 +308,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>OFF</string>
@@ -327,7 +327,7 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>OFF</string>
@@ -465,58 +465,58 @@
        <cursorShape>BlankCursor</cursorShape>
       </property>
       <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
+       <enum>Qt::StrongFocus</enum>
       </property>
       <property name="text">
        <string>start </string>
       </property>
      </widget>
-     <widget class="QLabel" name="preset_temp">
+     <widget class="QWidget" name="">
       <property name="geometry">
        <rect>
-        <x>32</x>
-        <y>22</y>
-        <width>91</width>
-        <height>21</height>
+        <x>31</x>
+        <y>21</y>
+        <width>119</width>
+        <height>27</height>
        </rect>
       </property>
-      <property name="cursor">
-       <cursorShape>BlankCursor</cursorShape>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="text">
-       <string>preset temp:</string>
-      </property>
-     </widget>
-     <widget class="QSpinBox" name="set_temp">
-      <property name="geometry">
-       <rect>
-        <x>130</x>
-        <y>20</y>
-        <width>44</width>
-        <height>25</height>
-       </rect>
-      </property>
-      <property name="cursor">
-       <cursorShape>BlankCursor</cursorShape>
-      </property>
-      <property name="focusPolicy">
-       <enum>Qt::NoFocus</enum>
-      </property>
-      <property name="minimum">
-       <number>45</number>
-      </property>
-      <property name="maximum">
-       <number>75</number>
-      </property>
-      <property name="singleStep">
-       <number>5</number>
-      </property>
-      <property name="value">
-       <number>45</number>
-      </property>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QLabel" name="preset_temp">
+         <property name="cursor">
+          <cursorShape>BlankCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::StrongFocus</enum>
+         </property>
+         <property name="text">
+          <string>TextLabel</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="set_temp">
+         <property name="cursor">
+          <cursorShape>BlankCursor</cursorShape>
+         </property>
+         <property name="focusPolicy">
+          <enum>Qt::StrongFocus</enum>
+         </property>
+         <property name="minimum">
+          <number>45</number>
+         </property>
+         <property name="maximum">
+          <number>75</number>
+         </property>
+         <property name="singleStep">
+          <number>5</number>
+         </property>
+         <property name="value">
+          <number>45</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </widget>
     </widget>
    </widget>
@@ -546,7 +546,7 @@
      <cursorShape>BlankCursor</cursorShape>
     </property>
     <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
+     <enum>Qt::StrongFocus</enum>
     </property>
     <property name="text">
      <string>Quit</string>
@@ -578,7 +578,7 @@
      <cursorShape>BlankCursor</cursorShape>
     </property>
     <property name="focusPolicy">
-     <enum>Qt::NoFocus</enum>
+     <enum>Qt::StrongFocus</enum>
     </property>
     <property name="text">
      <string>TextLabel</string>

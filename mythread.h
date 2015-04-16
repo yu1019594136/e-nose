@@ -3,7 +3,14 @@
 
 #include <QThread>
 #include <QString>
+#include <QTimer>
 
+/* 需要实时更新的信息 */
+typedef struct{
+    QString ds18b20_temp;
+    QString sht21_temp;
+    QString sht21_humid;
+} GUI_REALTIME_INFO;
 /*********************逻辑控制线程*****************************/
 class LogicControlThread : public QThread
 {
@@ -22,6 +29,8 @@ signals:
 
 public slots:
 
+private slots:
+
 };
 
 /*********************硬件控制线程*****************************/
@@ -39,7 +48,7 @@ private:
     volatile bool stopped;
 
 signals:
-    void send_ds18b20_temp(QString);
+    void send_realtime_info(GUI_REALTIME_INFO);
 
 public slots:
 
