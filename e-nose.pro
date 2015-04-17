@@ -30,7 +30,9 @@ SOURCES += main.cpp\
     spidev.c \
     tlc1543.c \
     uart.c \
-    mythread.cpp
+    thread_logic.cpp \
+    thread_hardware.cpp \
+    thread_data_proc.cpp
 
 HEADERS  += mainwindow.h \
     common.h \
@@ -44,7 +46,9 @@ HEADERS  += mainwindow.h \
     spidev.h \
     tlc1543.h \
     uart.h \
-    mythread.h
+    thread_logic.h \
+    thread_hardware.h \
+    thread_data_proc.h
 
 FORMS    += mainwindow.ui
 

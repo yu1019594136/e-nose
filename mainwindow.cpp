@@ -5,7 +5,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-Q_DECLARE_METATYPE(GUI_REALTIME_INFO);
+Q_DECLARE_METATYPE(GUI_REALTIME_INFO)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -95,9 +95,7 @@ void MainWindow::on_Quit_Button_clicked()//退出应用程序
 void MainWindow::realtime_info_update(GUI_REALTIME_INFO realtime_info)
 {
     ui->evap_temp_value->setText(realtime_info.ds18b20_temp);
-    //realtime_info.sht21_humid = "123";
     ui->humidty_value->setText(realtime_info.sht21_humid);
-    //realtime_info.sht21_temp = "456";
     ui->temp_value_sht21->setText(realtime_info.sht21_temp);
 }
 

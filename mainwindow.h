@@ -2,7 +2,9 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
-#include "mythread.h"
+#include "thread_logic.h"
+#include "thread_data_proc.h"
+#include "thread_hardware.h"
 #include <QTimer>
 
 namespace Ui {
