@@ -4,6 +4,7 @@
 #include <QDebug>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "HW_interface.h"
 
 Q_DECLARE_METATYPE(GUI_REALTIME_INFO)
 
@@ -94,7 +95,7 @@ void MainWindow::timerUpdate()
     ui->datetime->setText(datetime.toString("yyyy.MM.dd hh:mm"));
 }
 
-void MainWindow::result_fro_hardware_close_hardware()//退出应用程序
+void MainWindow::result_fro_hardware_close_hardware()//退出应用程序,执行关机命令
 {
     /* 将活跃状态的线程关闭 */
     if(logic_thread->isRunning())
@@ -107,7 +108,12 @@ void MainWindow::result_fro_hardware_close_hardware()//退出应用程序
         dataprocess_thread->stop();
 
     /* 等待三个子线程退出后再结束程序 */
-    usleep(800000);
+    while(!logic_thread->isFinished());
+    while(!hardware_thread->isFinished());
+    while(!dataprocess_thread->isFinished());
+
+    /* 启动另一个进程执行关机命令,5s后关机 */
+    //Application_quit(5);
 
     /* 退出时间循环，结束程序 */
     QApplication *p;

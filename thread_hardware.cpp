@@ -61,7 +61,6 @@ void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_sig
     thermostat.preset_temp = thermostat_signal.preset_temp;
 }
 
-
 void HardWareControlThread::recei_fro_GUI_close_hardware()
 {
     close_hardware();
