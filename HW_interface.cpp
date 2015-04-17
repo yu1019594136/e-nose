@@ -11,6 +11,7 @@
 #include <signal.h>
 #include <error.h>
 
+#include <QDebug>
 #include "HW_interface.h"
 #include "GPIO.h"
 #include "ds18b20.h"
@@ -59,67 +60,65 @@ PWM_Init_Struct pwm_9_42_zhenfashi;//该PWM输出用于控制蒸发室加热带
 
 
 /* 上电后系统初始化各个硬件电路，配置操作系统状态，等待用户操作 */
-void system_init(void)
+void init_hardware(void)
 {
-//    /* 所有gpio口均设置为输出，并且输出低电平*/
-//    gpio47_Beep.pin = 47;
-//    gpio47_Beep.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio47_Beep);
-//    gpio_set_value(&gpio47_Beep,LOW);
+    /* 所有gpio口均设置为输出，并且输出低电平*/
+    gpio47_Beep.pin = 47;
+    gpio47_Beep.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio47_Beep);
+    gpio_set_value(&gpio47_Beep,LOW);
 
-//    gpio46_Heat_S.pin = 46;
-//    gpio46_Heat_S.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio46_Heat_S);
-//    gpio_set_value(&gpio46_Heat_S,LOW);
+    gpio46_Heat_S.pin = 46;
+    gpio46_Heat_S.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio46_Heat_S);
+    gpio_set_value(&gpio46_Heat_S,LOW);
 
-//    gpio27_Pump_S.pin = 27;
-//    gpio27_Pump_S.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio27_Pump_S);
-//    gpio_set_value(&gpio27_Pump_S,LOW);
+    gpio27_Pump_S.pin = 27;
+    gpio27_Pump_S.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio27_Pump_S);
+    gpio_set_value(&gpio27_Pump_S,LOW);
 
-//    gpio67_M1.pin = 67;
-//    gpio67_M1.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio67_M1);
-//    gpio_set_value(&gpio67_M1,LOW);
+    gpio67_M1.pin = 67;
+    gpio67_M1.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio67_M1);
+    gpio_set_value(&gpio67_M1,LOW);
 
-//    gpio69_M2.pin = 69;
-//    gpio69_M2.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio69_M2);
-//    gpio_set_value(&gpio69_M2, LOW);
+    gpio69_M2.pin = 69;
+    gpio69_M2.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio69_M2);
+    gpio_set_value(&gpio69_M2, LOW);
 
-//    gpio65_M3.pin = 65;
-//    gpio65_M3.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio65_M3);
-//    gpio_set_value(&gpio65_M3,LOW);
+    gpio65_M3.pin = 65;
+    gpio65_M3.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio65_M3);
+    gpio_set_value(&gpio65_M3,LOW);
 
-//    gpio68_M4.pin = 68;
-//    gpio68_M4.dir = OUTPUT_PIN;
-//    GPIO_Init(&gpio68_M4);
-//    gpio_set_value(&gpio68_M4,LOW);
+    gpio68_M4.pin = 68;
+    gpio68_M4.dir = OUTPUT_PIN;
+    GPIO_Init(&gpio68_M4);
+    gpio_set_value(&gpio68_M4,LOW);
 
-//    /* 控制气泵的PWM波相关配置 */
-//    strcpy(pwm_8_13_airpump.name,"pwm_test_P8_13.11");
-//    pwm_8_13_airpump.duty = PWM_period_airpump;//默认duty等于周期，表示气泵全速运转;duty越大转速越快，duty取值范围0-PWM_period_airpump.
-//    pwm_8_13_airpump.period = PWM_period_airpump;//PWM波周期
-//    pwm_8_13_airpump.polarity = 1;//控制气泵的PWM波采用负逻辑
-//    PWM_Init(&pwm_8_13_airpump);
+    /* 控制气泵的PWM波相关配置 */
+    strcpy(pwm_8_13_airpump.name,"pwm_test_P8_13.11");
+    pwm_8_13_airpump.duty = PWM_period_airpump;//默认duty等于周期，表示气泵全速运转;duty越大转速越快，duty取值范围0-PWM_period_airpump.
+    pwm_8_13_airpump.period = PWM_period_airpump;//PWM波周期
+    pwm_8_13_airpump.polarity = 1;//控制气泵的PWM波采用负逻辑
+    PWM_Init(&pwm_8_13_airpump);
 
-//    /* 控制反应室加热带加热功率的相关配置 */
-//    strcpy(pwm_9_22_fanyingshi.name,"pwm_test_P9_22.12");
-//    pwm_9_22_fanyingshi.duty = 0;//duty越大一个周期加热时间越长，温升越快，duty取值范围0-PWM_period_heater
-//    pwm_9_22_fanyingshi.period = PWM_period_heater;//PWM波周期
-//    pwm_9_22_fanyingshi.polarity = 0;//采用正逻辑
-//    PWM_Init(&pwm_9_22_fanyingshi);
+    /* 控制反应室加热带加热功率的相关配置 */
+    strcpy(pwm_9_22_fanyingshi.name,"pwm_test_P9_22.12");
+    pwm_9_22_fanyingshi.duty = 0;//duty越大一个周期加热时间越长，温升越快，duty取值范围0-PWM_period_heater
+    pwm_9_22_fanyingshi.period = PWM_period_heater;//PWM波周期
+    pwm_9_22_fanyingshi.polarity = 0;//采用正逻辑
+    PWM_Init(&pwm_9_22_fanyingshi);
 
-//    /* 控制蒸发室加热带加热功率的相关配置 */
-//    strcpy(pwm_9_42_zhenfashi.name,"pwm_test_P9_42.13");
-//    pwm_9_42_zhenfashi.duty = 0;
-//    pwm_9_42_zhenfashi.period = PWM_period_heater;
-//    pwm_9_42_zhenfashi.polarity = 0;
-//    PWM_Init(&pwm_9_42_zhenfashi);
+    /* 控制蒸发室加热带加热功率的相关配置 */
+    strcpy(pwm_9_42_zhenfashi.name,"pwm_test_P9_42.13");
+    pwm_9_42_zhenfashi.duty = 0;
+    pwm_9_42_zhenfashi.period = PWM_period_heater;
+    pwm_9_42_zhenfashi.polarity = 0;
+    PWM_Init(&pwm_9_42_zhenfashi);
 
-    /* sht21初始化 */
-    //sht21_init();
 }
 
 //Switch = OPEN,表示打开;Switch = CLOSE,表示关闭
@@ -271,6 +270,21 @@ void collect_data(void)
     tlc1543_Close();
 }
 
+void get_realtime_info(GUI_REALTIME_INFO *realtime_info)
+{
+    char temp_str[]="00.000";
+
+    /* 不断采集蒸发室和反应室温度以及湿度数据，发送给GUI线程进行数据更新 */
+    DS18B20_Get_TempString("28-0000025ff821", temp_str);
+    realtime_info->ds18b20_temp = temp_str;
+
+    sht21_get_temp_string(temp_str);
+    realtime_info->sht21_temp = temp_str;
+
+    sht21_get_humidity_string(temp_str);
+    realtime_info->sht21_humid = temp_str;
+}
+
 void Application_quit(int seconds)
 {
     pid_t new_pid;
@@ -296,12 +310,11 @@ void Application_quit(int seconds)
 }
 
 /* 操作结束前，
- * 1、程序将保存所有数据文件；
- * 2、关闭各个功能硬件电路，恢复系统配置；
- * 3、退出应用程序，关闭操作系统以及系统电源 */
-void system_shutdown(void)
+ * 关闭各个功能硬件电路，恢复系统配置；
+ */
+void close_hardware(void)
 {
-//    /* 关闭各个IO口 */
+    /* 关闭各个IO口 */
 //    GPIO_Close(&gpio47_Beep);
 //    GPIO_Close(&gpio46_Heat_S);
 //    GPIO_Close(&gpio27_Pump_S);
@@ -310,13 +323,10 @@ void system_shutdown(void)
 //    GPIO_Close(&gpio65_M3);
 //    GPIO_Close(&gpio68_M4);
 
-//    /* 关闭各个PWM输出 */
-//    pwm_close(&pwm_8_13_airpump);
-//    pwm_close(&pwm_9_22_fanyingshi);
-//    pwm_close(&pwm_9_42_zhenfashi);
-
-    /* 关闭sht21设备文件句柄 */
-    //sht21_close();
+    /* 关闭各个PWM输出 */
+    pwm_close(&pwm_8_13_airpump);
+    pwm_close(&pwm_9_22_fanyingshi);
+    pwm_close(&pwm_9_42_zhenfashi);
 
 //    Application_quit(5);//5秒钟后关机
 }

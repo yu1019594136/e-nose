@@ -13,11 +13,13 @@ extern "C"
 {
 #endif
 
+/* 函数调用的返回结果 */
 enum RESULT{
-	ERROR = 0,
-	SUCCESS
+    ERROR = 0,
+    SUCCESS
 };
 
+/* 线程之间用于传递信息的结构体 */
 enum SWITCH{
     CLOSE = 0,
     OPEN
@@ -27,6 +29,11 @@ enum THERMO{
     STOP = 0,
     START
 };
+
+typedef struct{
+    int thermo_switch;
+    float preset_temp;
+} THERMOSTAT;
 
 #ifdef __cplusplus
 }

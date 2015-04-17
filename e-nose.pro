@@ -19,10 +19,8 @@ TEMPLATE = app
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    common.c \
     ds18b20.c \
     GPIO.c \
-    HW_interface.c \
     i2c.c \
     pid.c \
     PWM.c \
@@ -32,10 +30,11 @@ SOURCES += main.cpp\
     uart.c \
     thread_logic.cpp \
     thread_hardware.cpp \
-    thread_data_proc.cpp
+    thread_data_proc.cpp \
+    HW_interface.cpp \
+    common.c
 
 HEADERS  += mainwindow.h \
-    common.h \
     ds18b20.h \
     GPIO.h \
     HW_interface.h \
@@ -48,7 +47,8 @@ HEADERS  += mainwindow.h \
     uart.h \
     thread_logic.h \
     thread_hardware.h \
-    thread_data_proc.h
+    thread_data_proc.h \
+    common.h
 
 FORMS    += mainwindow.ui
 

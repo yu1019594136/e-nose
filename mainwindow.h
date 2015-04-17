@@ -2,10 +2,11 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QTimer>
 #include "thread_logic.h"
 #include "thread_data_proc.h"
 #include "thread_hardware.h"
-#include <QTimer>
+
 
 namespace Ui {
 class MainWindow;
@@ -19,10 +20,20 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+signals:
+    /* 通知硬件线程关闭硬件 */
+    void send_to_hardware_close_hardware();
+
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
     void timerUpdate();//用于更新时间
-    void realtime_info_update(GUI_REALTIME_INFO realtime_info);
+
+public slots:
+    /* 接收硬件线程发送来的实时温湿度数据 */
+    void recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info);
+
+    /* 接收来自硬件线程的关闭硬件操作结果 */
+    void result_fro_hardware_close_hardware();
 
 private:
     Ui::MainWindow *ui;

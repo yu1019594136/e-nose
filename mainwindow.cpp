@@ -16,15 +16,18 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 注册元类型 */
     qRegisterMetaType <GUI_REALTIME_INFO>("GUI_REALTIME_INFO");
+    qRegisterMetaType <THERMOSTAT>("THERMOSTAT");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
-
     logic_thread = new LogicControlThread();
-
     hardware_thread = new HardWareControlThread();
-    connect(hardware_thread, SIGNAL(send_realtime_info(GUI_REALTIME_INFO)), this, SLOT(realtime_info_update(GUI_REALTIME_INFO)), Qt::QueuedConnection);
-
     dataprocess_thread = new DataProcessThread();
+
+    connect(hardware_thread, SIGNAL(send_to_GUI_realtime_info_update(GUI_REALTIME_INFO)), this, SLOT(recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO)), Qt::QueuedConnection);
+    connect(logic_thread, SIGNAL(send_to_hard_evapor_thermostat(THERMOSTAT)), hardware_thread, SLOT(recei_fro_logic_thermostat(THERMOSTAT)), Qt::QueuedConnection);
+
+    connect(this, SIGNAL(send_to_hardware_close_hardware()), hardware_thread, SLOT(recei_fro_GUI_close_hardware()), Qt::QueuedConnection);
+    connect(hardware_thread, SIGNAL(return_to_GUI_close_hardware()), this, SLOT(result_fro_hardware_close_hardware()), Qt::QueuedConnection);
 
     logic_thread->start();
     hardware_thread->start();
@@ -72,7 +75,26 @@ MainWindow::~MainWindow()
     qDebug() << "delete something" << endl;
 }
 
-void MainWindow::on_Quit_Button_clicked()//退出应用程序
+void MainWindow::on_Quit_Button_clicked()
+{
+    /* 通知硬件线程关闭硬件 */
+    emit send_to_hardware_close_hardware();
+}
+
+void MainWindow::recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info)
+{
+    ui->evap_temp_value->setText(realtime_info.ds18b20_temp);
+    ui->humidty_value->setText(realtime_info.sht21_humid);
+    ui->temp_value_sht21->setText(realtime_info.sht21_temp);
+}
+
+void MainWindow::timerUpdate()
+{
+    QDateTime datetime = QDateTime::currentDateTime();
+    ui->datetime->setText(datetime.toString("yyyy.MM.dd hh:mm"));
+}
+
+void MainWindow::result_fro_hardware_close_hardware()//退出应用程序
 {
     /* 将活跃状态的线程关闭 */
     if(logic_thread->isRunning())
@@ -85,22 +107,9 @@ void MainWindow::on_Quit_Button_clicked()//退出应用程序
         dataprocess_thread->stop();
 
     /* 等待三个子线程退出后再结束程序 */
-    sleep(1);
+    usleep(800000);
 
     /* 退出时间循环，结束程序 */
     QApplication *p;
     p->quit();
-}
-
-void MainWindow::realtime_info_update(GUI_REALTIME_INFO realtime_info)
-{
-    ui->evap_temp_value->setText(realtime_info.ds18b20_temp);
-    ui->humidty_value->setText(realtime_info.sht21_humid);
-    ui->temp_value_sht21->setText(realtime_info.sht21_temp);
-}
-
-void MainWindow::timerUpdate()
-{
-    QDateTime datetime = QDateTime::currentDateTime();
-    ui->datetime->setText(datetime.toString("yyyy.MM.dd hh:mm"));
 }

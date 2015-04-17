@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QString>
 #include <QTimer>
+#include "common.h"
 
 
 
