@@ -51,10 +51,10 @@ void HardWareControlThread::run()
         realtime_info.ds18b20_temp = temp_str;
 
         sht21_get_temp_string(temp_str);
-        realtime_info.sht21_humid = temp_str;
+        realtime_info.sht21_temp = temp_str;
 
         sht21_get_humidity_string(temp_str);
-        realtime_info.sht21_temp = temp_str;
+        realtime_info.sht21_humid = temp_str;
 
         emit send_realtime_info(realtime_info);
 

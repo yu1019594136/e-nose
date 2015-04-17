@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/LCD_Images">
+        <file>LCD_Images/480X272像素3.jpg</file>
+    </qresource>
+</RCC>

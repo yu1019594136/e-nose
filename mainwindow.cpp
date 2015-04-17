@@ -40,6 +40,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     timer->start(1000);//一分钟更新一次时间
 
     /* 显示界面各个标签 */
+    ui->logo->setText("Electronic Nose");
     ui->evap_temp_lable->setText("evaporation temp:");
     ui->reactio_temp_lable->setText("reaction temp:");
     ui->humidity_lable->setText("reaction humi:");
