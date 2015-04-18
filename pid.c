@@ -16,14 +16,16 @@ float sum_error = 0.0;          //偏差累加和
 
 float uk = 0.0;         //u[k]
 
-THERMOSTATIC Thermostatic_room_temp_35;//室温恒温到35摄氏度的相关参数,下同
-THERMOSTATIC Thermostatic_35_45;//35摄氏度恒温到45摄氏度的相关参数,下同
-THERMOSTATIC Thermostatic_35_50;
-THERMOSTATIC Thermostatic_35_55;
-THERMOSTATIC Thermostatic_35_60;
-THERMOSTATIC Thermostatic_35_65;
-THERMOSTATIC Thermostatic_35_70;
-THERMOSTATIC Thermostatic_35_75;
+//THERMOSTATIC Thermostatic_room_temp_35;// 0   室温恒温到35摄氏度的相关参数,下同
+//THERMOSTATIC Thermostatic_35_45;//        1   35摄氏度恒温到45摄氏度的相关参数,下同
+//THERMOSTATIC Thermostatic_35_50;          2
+//THERMOSTATIC Thermostatic_35_55;          3
+//THERMOSTATIC Thermostatic_35_60;          4
+//THERMOSTATIC Thermostatic_35_65;          5
+//THERMOSTATIC Thermostatic_35_70;          6
+//THERMOSTATIC Thermostatic_35_75;          7
+
+THERMOSTATIC Thermostatic[8];
 
 void pid_Init(void)
 {
@@ -35,61 +37,61 @@ void pid_Init(void)
 //    printf("SET_PERIOD = %d us\tSET_DUTY = %d ns\n",SET_PERIOD, SET_DUTY);
 
     /* 载入所有相关的恒温控制参数 */
-    Thermostatic_room_temp_35.preset_temp = 35.0;
-    Thermostatic_room_temp_35.borderline[0] = 4000000;
-    Thermostatic_room_temp_35.borderline[1] = 4000000;
-    Thermostatic_room_temp_35.borderline[2] = 4000000;
-    Thermostatic_room_temp_35.borderline[3] = 1000000;
-    Thermostatic_room_temp_35.borderline[4] = 500000;
+    Thermostatic[0].preset_temp = 35.0;
+    Thermostatic[0].borderline[0] = 4000000;
+    Thermostatic[0].borderline[1] = 4000000;
+    Thermostatic[0].borderline[2] = 4000000;
+    Thermostatic[0].borderline[3] = 1000000;
+    Thermostatic[0].borderline[4] = 500000;
 
-    Thermostatic_35_45.preset_temp = 45.0;
-    Thermostatic_35_45.borderline[0] = 800000;
-    Thermostatic_35_45.borderline[1] = 800000;
-    Thermostatic_35_45.borderline[2] = 800000;
-    Thermostatic_35_45.borderline[3] = 800000;
-    Thermostatic_35_45.borderline[4] = 800000;
+    Thermostatic[1].preset_temp = 45.0;
+    Thermostatic[1].borderline[0] = 800000;
+    Thermostatic[1].borderline[1] = 800000;
+    Thermostatic[1].borderline[2] = 800000;
+    Thermostatic[1].borderline[3] = 800000;
+    Thermostatic[1].borderline[4] = 800000;
 
-    Thermostatic_35_50.preset_temp = 50.0;
-    Thermostatic_35_50.borderline[0] = 2000000;
-    Thermostatic_35_50.borderline[1] = 2000000;
-    Thermostatic_35_50.borderline[2] = 2000000;
-    Thermostatic_35_50.borderline[3] = 2000000;
-    Thermostatic_35_50.borderline[4] = 1000000;
+    Thermostatic[2].preset_temp = 50.0;
+    Thermostatic[2].borderline[0] = 2000000;
+    Thermostatic[2].borderline[1] = 2000000;
+    Thermostatic[2].borderline[2] = 2000000;
+    Thermostatic[2].borderline[3] = 2000000;
+    Thermostatic[2].borderline[4] = 1000000;
 
-    Thermostatic_35_55.preset_temp = 55.0;
-    Thermostatic_35_55.borderline[0] = 4000000;
-    Thermostatic_35_55.borderline[1] = 4000000;
-    Thermostatic_35_55.borderline[2] = 4000000;
-    Thermostatic_35_55.borderline[3] = 2000000;
-    Thermostatic_35_55.borderline[4] = 1000000;
+    Thermostatic[3].preset_temp = 55.0;
+    Thermostatic[3].borderline[0] = 4000000;
+    Thermostatic[3].borderline[1] = 4000000;
+    Thermostatic[3].borderline[2] = 4000000;
+    Thermostatic[3].borderline[3] = 2000000;
+    Thermostatic[3].borderline[4] = 1000000;
 
-    Thermostatic_35_60.preset_temp = 60.0;
-    Thermostatic_35_60.borderline[0] = 6000000;
-    Thermostatic_35_60.borderline[1] = 6000000;
-    Thermostatic_35_60.borderline[2] = 5000000;
-    Thermostatic_35_60.borderline[3] = 3000000;
-    Thermostatic_35_60.borderline[4] = 1500000;
+    Thermostatic[4].preset_temp = 60.0;
+    Thermostatic[4].borderline[0] = 6000000;
+    Thermostatic[4].borderline[1] = 6000000;
+    Thermostatic[4].borderline[2] = 5000000;
+    Thermostatic[4].borderline[3] = 3000000;
+    Thermostatic[4].borderline[4] = 1500000;
 
-    Thermostatic_35_65.preset_temp = 65.0;
-    Thermostatic_35_65.borderline[0] = 7000000;
-    Thermostatic_35_65.borderline[1] = 5000000;
-    Thermostatic_35_65.borderline[2] = 4000000;
-    Thermostatic_35_65.borderline[3] = 3000000;
-    Thermostatic_35_65.borderline[4] = 2500000;
+    Thermostatic[5].preset_temp = 65.0;
+    Thermostatic[5].borderline[0] = 7000000;
+    Thermostatic[5].borderline[1] = 5000000;
+    Thermostatic[5].borderline[2] = 4000000;
+    Thermostatic[5].borderline[3] = 3000000;
+    Thermostatic[5].borderline[4] = 2500000;
 
-    Thermostatic_35_70.preset_temp = 70.0;
-    Thermostatic_35_70.borderline[0] = 6000000;
-    Thermostatic_35_70.borderline[1] = 4000000;
-    Thermostatic_35_70.borderline[2] = 3000000;
-    Thermostatic_35_70.borderline[3] = 2500000;
-    Thermostatic_35_70.borderline[4] = 2500000;
+    Thermostatic[6].preset_temp = 70.0;
+    Thermostatic[6].borderline[0] = 6000000;
+    Thermostatic[6].borderline[1] = 4000000;
+    Thermostatic[6].borderline[2] = 3000000;
+    Thermostatic[6].borderline[3] = 2500000;
+    Thermostatic[6].borderline[4] = 2500000;
 
-    Thermostatic_35_75.preset_temp = 75.0;
-    Thermostatic_35_75.borderline[0] = 5000000;
-    Thermostatic_35_75.borderline[1] = 3000000;
-    Thermostatic_35_75.borderline[2] = 2500000;
-    Thermostatic_35_75.borderline[3] = 2500000;
-    Thermostatic_35_75.borderline[4] = 2500000;
+    Thermostatic[7].preset_temp = 75.0;
+    Thermostatic[7].borderline[0] = 5000000;
+    Thermostatic[7].borderline[1] = 3000000;
+    Thermostatic[7].borderline[2] = 2500000;
+    Thermostatic[7].borderline[3] = 2500000;
+    Thermostatic[7].borderline[4] = 2500000;
 }
 
 int pid_calculation(THERMOSTATIC *thermostatic, float Feedbackvalue)
@@ -100,7 +102,7 @@ int pid_calculation(THERMOSTATIC *thermostatic, float Feedbackvalue)
 
     error = thermostatic->preset_temp - Feedbackvalue;
 
-    printf("error = %.2f\n", error);
+//    printf("error = %.2f\n", error);
 
 //    sum_error += error;
 

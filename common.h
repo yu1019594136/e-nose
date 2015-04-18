@@ -22,7 +22,7 @@ enum RESULT{
 /* 线程之间用于传递信息的结构体 */
 enum SWITCH{
     CLOSE = 0,
-    OPEN
+    OPEN = 1,
 };
 
 enum THERMO{
@@ -34,6 +34,11 @@ typedef struct{
     int thermo_switch;
     float preset_temp;
 } THERMOSTAT;
+
+typedef struct{
+    int beep_count;
+    int beep_interval;
+} BEEP;
 
 #ifdef __cplusplus
 }

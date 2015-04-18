@@ -119,6 +119,8 @@ void init_hardware(void)
     pwm_9_42_zhenfashi.polarity = 0;
     PWM_Init(&pwm_9_42_zhenfashi);
 
+    /* 载入所有相关的恒温控制参数 */
+    pid_Init();
 }
 
 //Switch = OPEN,表示打开;Switch = CLOSE,表示关闭
@@ -270,21 +272,6 @@ void collect_data(void)
     tlc1543_Close();
 }
 
-void get_realtime_info(GUI_REALTIME_INFO *realtime_info)
-{
-    char temp_str[]="00.000";
-
-    /* 不断采集蒸发室和反应室温度以及湿度数据，发送给GUI线程进行数据更新 */
-    DS18B20_Get_TempString("28-0000025ff821", temp_str);
-    realtime_info->ds18b20_temp = temp_str;
-
-    sht21_get_temp_string(temp_str);
-    realtime_info->sht21_temp = temp_str;
-
-    sht21_get_humidity_string(temp_str);
-    realtime_info->sht21_humid = temp_str;
-}
-
 void Application_quit(int seconds)
 {
     pid_t new_pid;
@@ -314,6 +301,17 @@ void Application_quit(int seconds)
  */
 void close_hardware(void)
 {
+    /* 关闭各个PWM输出 */
+    pwm_close(&pwm_8_13_airpump);
+    pwm_close(&pwm_9_22_fanyingshi);
+    pwm_close(&pwm_9_42_zhenfashi);
+
+    /* 断开加热电路，安保措施 */
+    Heat_S_Switch(CLOSE);
+
+    /* 安保措施 */
+    Beep_Switch(CLOSE);
+
     /* 关闭各个IO口 */
 //    GPIO_Close(&gpio47_Beep);
 //    GPIO_Close(&gpio46_Heat_S);
@@ -323,10 +321,4 @@ void close_hardware(void)
 //    GPIO_Close(&gpio65_M3);
 //    GPIO_Close(&gpio68_M4);
 
-    /* 关闭各个PWM输出 */
-    pwm_close(&pwm_8_13_airpump);
-    pwm_close(&pwm_9_22_fanyingshi);
-    pwm_close(&pwm_9_42_zhenfashi);
-
-//    Application_quit(5);//5秒钟后关机
 }

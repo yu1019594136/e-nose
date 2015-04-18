@@ -41,12 +41,33 @@ typedef struct
     unsigned long borderline[5];
 } THERMOSTATIC;
 
+/* 判断边界 */
 enum BORDERLINE{
     BORDERLINE4 = 0,
     BORDERLINE3 = 10,
     BORDERLINE2 = 15,
     BORDERLINE1 = 20,
     BORDERLINE0 = 25
+};
+
+enum PARA_NUM{
+    //THERMOSTATIC Thermostatic_room_temp_35;// 0   室温恒温到35摄氏度的相关参数,下同
+    //THERMOSTATIC Thermostatic_35_45;//        1   35摄氏度恒温到45摄氏度的相关参数,下同
+    //THERMOSTATIC Thermostatic_35_50;          2
+    //THERMOSTATIC Thermostatic_35_55;          3
+    //THERMOSTATIC Thermostatic_35_60;          4
+    //THERMOSTATIC Thermostatic_35_65;          5
+    //THERMOSTATIC Thermostatic_35_70;          6
+    //THERMOSTATIC Thermostatic_35_75;          7
+    temp_room_35 = 0,
+    temp_35_45 = 1,
+    temp_35_50 = 2,
+    temp_35_55 = 3,
+    temp_35_60 = 4,
+    temp_35_65 = 5,
+    temp_35_70 = 6,
+    temp_35_75 = 7,
+    temp_unset
 };
 
 void pid_Init(void);
