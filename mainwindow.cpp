@@ -19,6 +19,8 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <GUI_REALTIME_INFO>("GUI_REALTIME_INFO");
     qRegisterMetaType <THERMOSTAT>("THERMOSTAT");
     qRegisterMetaType <BEEP>("BEEP");
+    qRegisterMetaType <PUMP>("PUMP");
+    qRegisterMetaType <MAGNETIC>("MAGNETIC");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -28,9 +30,15 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 实时更新温湿度数据 */
     connect(hardware_thread, SIGNAL(send_to_GUI_realtime_info_update(GUI_REALTIME_INFO)), this, SLOT(recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO)), Qt::QueuedConnection);
 
-    /* 蒸发室恒温操作 */
+    /* 逻辑线程发送蒸发室恒温信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_evapor_thermostat(THERMOSTAT)), hardware_thread, SLOT(recei_fro_logic_thermostat(THERMOSTAT)), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_logic_thermostat_done()), logic_thread, SLOT(recei_fro_hardware_thermostat_done()), Qt::QueuedConnection);
+
+    /* 逻辑线程发送蜂鸣器控制信号给硬件线程 */
+    connect(logic_thread, SIGNAL(send_to_hard_beep(BEEP)), hardware_thread, SLOT(recei_fro_logic_beep(BEEP)), Qt::QueuedConnection);
+
+    /* 逻辑线程发送气泵控制信号给硬件线程 */
+    connect(logic_thread, SIGNAL(send_to_hard_pump(PUMP)), hardware_thread, SLOT(recei_fro_logic_pump(PUMP)),Qt::QueuedConnection);
 
     /* 恒温操作时GUI实时更新duty */
     connect(hardware_thread, SIGNAL(send_to_GUI_duty_update(int)), this, SLOT(recei_fro_hard_duty_update(int)), Qt::QueuedConnection);
@@ -38,9 +46,6 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 按下quit按钮后关机 */
     connect(this, SIGNAL(send_to_hardware_close_hardware()), hardware_thread, SLOT(recei_fro_GUI_close_hardware()), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(return_to_GUI_close_hardware()), this, SLOT(result_fro_hardware_close_hardware()), Qt::QueuedConnection);
-
-    /* 逻辑线程发送蜂鸣器控制信号给硬件线程 */
-    connect(logic_thread, SIGNAL(send_to_hard_beep(BEEP)), hardware_thread, SLOT(recei_fro_logic_beep(BEEP)), Qt::QueuedConnection);
 
     logic_thread->start();
     hardware_thread->start();

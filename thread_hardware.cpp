@@ -22,9 +22,17 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     thermostat.thermo_switch = STOP;
     thermostat.preset_temp = 35.0;
 
-    /* 实例化一个定时器用于蜂鸣器 */
+    pump.pump_switch = CLOSE;
+    pump.pump_duty = 0;
+    pump.hold_time = 0;
+
+    /* 实例化一个定时器用于蜂鸣器鸣叫间隔控制 */
     beep_timer = new QTimer();
     connect(beep_timer, SIGNAL(timeout()), this, SLOT(beep_timeout()));
+
+    /* 实例化一个定时器用于气泵开启时间控制 */
+    pump_timer = new QTimer();
+    connect(pump_timer, SIGNAL(timeout()), this, SLOT(pump_timeout()));
 
     stopped = false;
 }
@@ -36,8 +44,6 @@ void HardWareControlThread::run()
     char temp_str[]="00.000";
     int duty = 0;
     int last_duty = 0;
-    PARA_NUM para_num = temp_unset;//缺省值
-    int flag_inform_duty_0 = 0;
 
     /* 上电后系统初始化各个硬件电路，配置操作系统状态，等待用户操作 */
     init_hardware();
@@ -56,46 +62,15 @@ void HardWareControlThread::run()
 
         emit send_to_GUI_realtime_info_update(realtime_info);
 
-        /* 恒温控制 */
-        if(thermostat.thermo_switch == STOP)//停止恒温
+        /* 恒温控制 ******************************************/
+        if(thermostat.thermo_switch == START)//开始恒温
         {
-            para_num = temp_unset;//恢复缺省值
-            Heat_S_Switch(CLOSE);//关闭加热电路开关
-            flag_inform_duty_0 = 0;
-            set_pwm_duty(&pwm_9_22_fanyingshi, 0);//
-            emit send_to_GUI_duty_update(0);
-        }
-        else if(thermostat.thermo_switch == START)//开始恒温
-        {
-            if(para_num == temp_unset)
-            {
-                if(thermostat.preset_temp > 70)
-                    para_num = temp_35_75;
-                else if(thermostat.preset_temp > 65)
-                    para_num = temp_35_70;
-                else if(thermostat.preset_temp > 60)
-                    para_num = temp_35_65;
-                else if(thermostat.preset_temp > 55)
-                    para_num = temp_35_60;
-                else if(thermostat.preset_temp > 50)
-                    para_num = temp_35_55;
-                else if(thermostat.preset_temp > 45)
-                    para_num = temp_35_50;
-                else if(thermostat.preset_temp > 40)
-                    para_num = temp_35_45;
-                else
-                    para_num = temp_room_35;
+            /* 检测温度是否稳定 */
 
-                /* 打开加热电路开关 */
-                Heat_S_Switch(OPEN);
-
-                /* 达到预期温度后通知逻辑线程 */
-                flag_inform_duty_0 = 0;
-            }
-
+            /* 根据ds18b20反馈和预设温度计算控制量 */
             duty = pid_calculation(&Thermostatic[para_num], temp_float);
 
-            /* 达到预期温度后通知逻辑线程 */
+            /* 达到预期温度后通知逻辑线程,仅仅通知一次 */
             if(duty == 0 && flag_inform_duty_0 == 0)
             {
                 flag_inform_duty_0 = 1;
@@ -122,41 +97,106 @@ void HardWareControlThread::stop()
     stopped = true;
 }
 
-void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_signal)
+void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_para)
 {
-    thermostat.thermo_switch = thermostat_signal.thermo_switch;
-    thermostat.preset_temp = thermostat_signal.preset_temp;
+    thermostat.thermo_switch = thermostat_para.thermo_switch;
+    thermostat.preset_temp = thermostat_para.preset_temp;
+    thermostat.hold_time = thermostat_para.hold_time;
+
+    if(thermostat.thermo_switch == STOP)//停止恒温
+    {
+        Heat_S_Switch(CLOSE);//关闭加热电路开关
+        set_pwm_duty(&pwm_9_42_zhenfashi, 0);
+        flag_inform_duty_0 = 0;
+        emit send_to_GUI_duty_update(0);
+    }
+    else if(thermostat.thermo_switch == START)//开始恒温
+    {
+        /* 恒温参数配置 */
+        if(thermostat.preset_temp > 70)
+            para_num = temp_35_75;
+        else if(thermostat.preset_temp > 65)
+            para_num = temp_35_70;
+        else if(thermostat.preset_temp > 60)
+            para_num = temp_35_65;
+        else if(thermostat.preset_temp > 55)
+            para_num = temp_35_60;
+        else if(thermostat.preset_temp > 50)
+            para_num = temp_35_55;
+        else if(thermostat.preset_temp > 45)
+            para_num = temp_35_50;
+        else if(thermostat.preset_temp > 40)
+            para_num = temp_35_45;
+        else
+            para_num = temp_room_35;
+
+        /* 打开加热电路开关 */
+        Heat_S_Switch(OPEN);
+
+        flag_inform_duty_0 = 0;
+    }
+}
+
+void HardWareControlThread::recei_fro_logic_beep(BEEP beep_para)
+{
+    beep.beep_count = beep_para.beep_count * 2;
+    beep.beep_interval = beep_para.beep_interval;
+
+    beep_timer->start(beep_para.beep_interval);//启动蜂鸣器的定时器
+    Beep_Switch(OPEN);//调用函数打开蜂鸣器
+    beep.beep_count--;
+}
+
+void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
+{
+    pump.pump_switch = pump_para.pump_switch;
+    pump.pump_duty = pump_para.pump_duty;
+    pump.hold_time = pump_para.hold_time;
+
+    /* 配置PWM波 */
+    set_pwm_duty(&pwm_8_13_airpump, pump.pump_duty);
+
+    /* 接通气泵电路 */
+    Pump_S_Switch(HIGH);
+
+    /* 启动计时 */
+    pump_timer->start(pump.hold_time);
 }
 
 void HardWareControlThread::recei_fro_GUI_close_hardware()
 {
     close_hardware();
-    emit return_to_GUI_close_hardware();
-}
 
-void HardWareControlThread::recei_fro_logic_beep(BEEP beep)
-{
-    beep_info.beep_count = beep.beep_count * 2;
-    beep_info.beep_interval = beep.beep_interval;
-    beep_timer->start(beep.beep_interval);//启动蜂鸣器的定时器
-    Beep_Switch(OPEN);
-    beep_info.beep_count--;
+    /* 告诉逻辑线程硬件已经关闭 */
+    emit return_to_GUI_close_hardware();
 }
 
 void HardWareControlThread::beep_timeout()
 {
-    if(beep_info.beep_count > 0)
+    if(beep.beep_count > 0)
     {
-        if(beep_info.beep_count%2)
+        if(beep.beep_count%2)
             Beep_Switch(CLOSE);
         else
             Beep_Switch(OPEN);
 
-        beep_info.beep_count--;
+        beep.beep_count--;
     }
     else//鸣叫次数为0则关闭定时器
     {
         beep_timer->stop();
         Beep_Switch(CLOSE);
     }
+}
+
+void HardWareControlThread::pump_timeout()
+{
+    /* 关闭定时器 */
+    pump_timer->stop();
+
+    /* 断开气泵电路 */
+    Pump_S_Switch(LOW);
+
+    /* 配置PWM波 */
+    set_pwm_duty(&pwm_8_13_airpump, 0);
 }

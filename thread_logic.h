@@ -18,15 +18,22 @@ protected:
     void run();
 
 private:
-    volatile bool stopped;
-    BEEP beep;//
+    volatile bool stopped;//线程状态控制，true表示线程结束，false表示不结束
+
+    BEEP beep_para;//蜂鸣器控制相关参数
+    THERMOSTAT thermostat_para;//加热带控制相关参数
+    PUMP pump_para;//气泵控制相关参数
+    MAGNETIC magnetic_para;//电磁阀状态控制相关参数
 
 signals:
     /* 发送给硬件控制线程的恒温信号 */
-    void send_to_hard_evapor_thermostat(THERMOSTAT thermostat_signal);
+    void send_to_hard_evapor_thermostat(THERMOSTAT thermostat_para);
 
     /* 发送给硬件线程的蜂鸣器控制信号 */
-    void send_to_hard_beep(BEEP beep);
+    void send_to_hard_beep(BEEP beep_para);
+
+    /* 发送给硬件线程的气泵控制信号 */
+    void send_to_hard_pump(PUMP pump_para);
 
 public slots:
     /* 处理来自硬件线程恒温完成的信号 */

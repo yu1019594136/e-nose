@@ -15,16 +15,6 @@ extern "C"
 {
 #endif
 
-enum PIN_DIRECTION{
-	INPUT_PIN = 0,
-	OUTPUT_PIN
-};
-
-enum PIN_VALUE{
-	LOW = 0,
-	HIGH
-};
-
 typedef struct {
 	unsigned int pin;
 	int fd_value;

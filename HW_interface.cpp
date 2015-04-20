@@ -312,6 +312,10 @@ void close_hardware(void)
     /* 安保措施 */
     Beep_Switch(CLOSE);
 
+    /* 断开气泵电源 */
+    Pump_S_Switch(CLOSE);
+
+
     /* 关闭各个IO口 */
 //    GPIO_Close(&gpio47_Beep);
 //    GPIO_Close(&gpio46_Heat_S);

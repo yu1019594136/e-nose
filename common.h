@@ -13,6 +13,16 @@ extern "C"
 {
 #endif
 
+enum PIN_DIRECTION{
+    INPUT_PIN = 0,
+    OUTPUT_PIN
+};
+
+enum PIN_VALUE{
+    LOW = 0,
+    HIGH
+};
+
 /* 函数调用的返回结果 */
 enum RESULT{
     ERROR = 0,
@@ -31,14 +41,28 @@ enum THERMO{
 };
 
 typedef struct{
-    int thermo_switch;
-    float preset_temp;
+    int thermo_switch;//加热带电路开关，STOP? START?
+    float preset_temp;//预设温度
+    int hold_time;//蒸发时间
 } THERMOSTAT;
 
 typedef struct{
-    int beep_count;
-    int beep_interval;
+    int beep_count;//鸣叫次数
+    int beep_interval;//鸣叫时间间隔
 } BEEP;
+
+typedef struct{
+    int pump_switch;//气泵电路开关，OPEN? CLOSE?
+    int pump_duty;//PWM占空比
+    int hold_time;//开启时间
+} PUMP;
+
+typedef struct{
+    int M1;//电磁阀1的状态，下同HIGH? LOW?
+    int M2;//
+    int M3;//
+    int M4;//
+} MAGNETIC;
 
 #ifdef __cplusplus
 }

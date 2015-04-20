@@ -66,8 +66,7 @@ enum PARA_NUM{
     temp_35_60 = 4,
     temp_35_65 = 5,
     temp_35_70 = 6,
-    temp_35_75 = 7,
-    temp_unset
+    temp_35_75 = 7
 };
 
 void pid_Init(void);
