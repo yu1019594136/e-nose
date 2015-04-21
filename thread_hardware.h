@@ -44,13 +44,16 @@ signals:
     void send_to_GUI_realtime_info_update(GUI_REALTIME_INFO);
 
     /* 恒温时将实时的duty值发送给GUI线程 */
-    void send_to_GUI_duty_update(int duty);
+    void send_to_GUI_thermostat_duty_update(int duty_info);
 
-    /* 恒温完成 */
+    /* 开启气泵时将实时的duty值发送给GUI线程 */
+    void send_to_GUI_pump_duty_update(int duty_info);
+
+    /* 使用电磁阀时将电磁阀状态信息发送给GUI线程 */
+    void send_to_GUI_magnetic_update(MAGNETIC magnetic_info);
+
+    /* 恒温完成，通知逻辑线程 */
     void send_to_logic_thermostat_done();
-
-    /* 返回给逻辑线程恒温的操作结果 */
-    void return_to_logic_thermostat(RESULT result);
 
     /* 返回给GUI线程关闭硬件的操作结果 */
     void return_to_GUI_close_hardware();
@@ -64,6 +67,9 @@ public slots:
 
     /* 处理来自逻辑控制线程的气泵控制信号 */
     void recei_fro_logic_pump(PUMP pump_para);
+
+    /* 处理来自逻辑控制线程的电磁阀控制信号 */
+    void recei_fro_logic_magnetic(MAGNETIC magnetic_para);
 
     /* 处理来自GUI线程关闭硬件信号 */
     void recei_fro_GUI_close_hardware();

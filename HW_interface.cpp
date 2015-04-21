@@ -123,55 +123,34 @@ void init_hardware(void)
     pid_Init();
 }
 
-//Switch = OPEN,表示打开;Switch = CLOSE,表示关闭
+//Switch = HIGH,表示打开;Switch = LOW,表示关闭
 void Beep_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio47_Beep,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio47_Beep,LOW);
+    gpio_set_value(&gpio47_Beep,Switch);
 }
 void Heat_S_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio46_Heat_S,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio46_Heat_S,LOW);
+    gpio_set_value(&gpio46_Heat_S,Switch);
 }
 void Pump_S_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio27_Pump_S,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio27_Pump_S,LOW);
+    gpio_set_value(&gpio27_Pump_S,Switch);
 }
 void M1_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio67_M1,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio67_M1,LOW);
+    gpio_set_value(&gpio67_M1,Switch);
 }
 void M2_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio69_M2, HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio69_M2, LOW);
+    gpio_set_value(&gpio69_M2, Switch);
 }
 void M3_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio65_M3,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio65_M3,LOW);
+    gpio_set_value(&gpio65_M3,Switch);
 }
 void M4_Switch(int Switch)
 {
-    if(Switch == OPEN)
-        gpio_set_value(&gpio68_M4,HIGH);
-    else if(Switch == CLOSE)
-        gpio_set_value(&gpio68_M4,LOW);
+    gpio_set_value(&gpio68_M4,Switch);
 }
 
 /*******采集电压测试***********#include "tlc1543.h"******/
@@ -307,14 +286,19 @@ void close_hardware(void)
     pwm_close(&pwm_9_42_zhenfashi);
 
     /* 断开加热电路，安保措施 */
-    Heat_S_Switch(CLOSE);
+    Heat_S_Switch(LOW);
 
     /* 安保措施 */
-    Beep_Switch(CLOSE);
+    Beep_Switch(LOW);
 
     /* 断开气泵电源 */
-    Pump_S_Switch(CLOSE);
+    Pump_S_Switch(LOW);
 
+    /* 控制相应的电磁阀 */
+    M1_Switch(LOW);
+    M2_Switch(LOW);
+    M3_Switch(LOW);
+    M4_Switch(LOW);
 
     /* 关闭各个IO口 */
 //    GPIO_Close(&gpio47_Beep);
@@ -324,5 +308,4 @@ void close_hardware(void)
 //    GPIO_Close(&gpio69_M2);
 //    GPIO_Close(&gpio65_M3);
 //    GPIO_Close(&gpio68_M4);
-
 }

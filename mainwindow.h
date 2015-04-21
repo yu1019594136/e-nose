@@ -36,7 +36,13 @@ public slots:
     void result_fro_hardware_close_hardware();
 
     /* 接收来自硬件线程的恒温实时duty值 */
-    void recei_fro_hard_duty_update(int duty);
+    void recei_fro_hard_thermostat_duty_update(int duty_info);
+
+    /* 接收来自硬件线程的开启气泵时duty值 */
+    void recei_fro_hard_pump_duty_update(int duty_info);
+
+    /* 接收来自硬件线程的电磁阀状态信息 */
+    void recei_fro_hard_magnetic_update(MAGNETIC magnetic_info);
 
 private:
     Ui::MainWindow *ui;

@@ -22,10 +22,6 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     thermostat.thermo_switch = STOP;
     thermostat.preset_temp = 35.0;
 
-    pump.pump_switch = CLOSE;
-    pump.pump_duty = 0;
-    pump.hold_time = 0;
-
     /* 实例化一个定时器用于蜂鸣器鸣叫间隔控制 */
     beep_timer = new QTimer();
     connect(beep_timer, SIGNAL(timeout()), this, SLOT(beep_timeout()));
@@ -83,7 +79,7 @@ void HardWareControlThread::run()
             last_duty = duty;
 
             /* 恒温时将实时的duty值发送给GUI线程 */
-            emit send_to_GUI_duty_update(duty);
+            emit send_to_GUI_thermostat_duty_update(duty);
         }
 
         msleep(200);
@@ -105,10 +101,10 @@ void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_par
 
     if(thermostat.thermo_switch == STOP)//停止恒温
     {
-        Heat_S_Switch(CLOSE);//关闭加热电路开关
+        Heat_S_Switch(LOW);//关闭加热电路开关
         set_pwm_duty(&pwm_9_42_zhenfashi, 0);
         flag_inform_duty_0 = 0;
-        emit send_to_GUI_duty_update(0);
+        emit send_to_GUI_thermostat_duty_update(0);
     }
     else if(thermostat.thermo_switch == START)//开始恒温
     {
@@ -131,7 +127,7 @@ void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_par
             para_num = temp_room_35;
 
         /* 打开加热电路开关 */
-        Heat_S_Switch(OPEN);
+        Heat_S_Switch(HIGH);
 
         flag_inform_duty_0 = 0;
     }
@@ -142,9 +138,12 @@ void HardWareControlThread::recei_fro_logic_beep(BEEP beep_para)
     beep.beep_count = beep_para.beep_count * 2;
     beep.beep_interval = beep_para.beep_interval;
 
-    beep_timer->start(beep_para.beep_interval);//启动蜂鸣器的定时器
-    Beep_Switch(OPEN);//调用函数打开蜂鸣器
-    beep.beep_count--;
+    if(beep.beep_count > 0)//避免0次数或者负参数的干扰
+    {
+        beep_timer->start(beep_para.beep_interval);//启动蜂鸣器的定时器
+        Beep_Switch(HIGH);//调用函数打开蜂鸣器
+        beep.beep_count--;
+    }
 }
 
 void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
@@ -153,14 +152,36 @@ void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
     pump.pump_duty = pump_para.pump_duty;
     pump.hold_time = pump_para.hold_time;
 
-    /* 配置PWM波 */
-    set_pwm_duty(&pwm_8_13_airpump, pump.pump_duty);
+    if(pump.pump_switch == HIGH)
+    {
+        /* 配置PWM波 */
+        set_pwm_duty(&pwm_8_13_airpump, pump.pump_duty);
 
-    /* 接通气泵电路 */
-    Pump_S_Switch(HIGH);
+        /* 接通气泵电路 */
+        Pump_S_Switch(pump.pump_switch);
 
-    /* 启动计时 */
-    pump_timer->start(pump.hold_time);
+        /* 启动计时 */
+        pump_timer->start(pump.hold_time);
+
+        /* 更新气泵硬件信息到GUI线程 */
+        emit send_to_GUI_pump_duty_update(pump.pump_duty);
+    }
+}
+
+void HardWareControlThread::recei_fro_logic_magnetic(MAGNETIC magnetic_para)
+{
+    magnetic.M1 = magnetic_para.M1;
+    magnetic.M2 = magnetic_para.M2;
+    magnetic.M3 = magnetic_para.M3;
+    magnetic.M4 = magnetic_para.M4;
+
+    /* 控制相应的电磁阀 */
+    M1_Switch(magnetic.M1);
+    M2_Switch(magnetic.M2);
+    M3_Switch(magnetic.M3);
+    M4_Switch(magnetic.M4);
+
+    emit send_to_GUI_magnetic_update(magnetic);
 }
 
 void HardWareControlThread::recei_fro_GUI_close_hardware()
@@ -176,16 +197,16 @@ void HardWareControlThread::beep_timeout()
     if(beep.beep_count > 0)
     {
         if(beep.beep_count%2)
-            Beep_Switch(CLOSE);
+            Beep_Switch(LOW);
         else
-            Beep_Switch(OPEN);
+            Beep_Switch(HIGH);
 
         beep.beep_count--;
     }
     else//鸣叫次数为0则关闭定时器
     {
         beep_timer->stop();
-        Beep_Switch(CLOSE);
+        Beep_Switch(LOW);
     }
 }
 
@@ -199,4 +220,7 @@ void HardWareControlThread::pump_timeout()
 
     /* 配置PWM波 */
     set_pwm_duty(&pwm_8_13_airpump, 0);
+
+    /* 更新气泵硬件信息到GUI线程 */
+    emit send_to_GUI_pump_duty_update(0);
 }

@@ -35,6 +35,9 @@ signals:
     /* 发送给硬件线程的气泵控制信号 */
     void send_to_hard_pump(PUMP pump_para);
 
+    /* 发送给硬件线程的电磁阀控制信号 */
+    void send_to_hard_magnetic(MAGNETIC magnetic_para);
+
 public slots:
     /* 处理来自硬件线程恒温完成的信号 */
     void recei_fro_hardware_thermostat_done();

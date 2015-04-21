@@ -33,15 +33,19 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 逻辑线程发送蒸发室恒温信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_evapor_thermostat(THERMOSTAT)), hardware_thread, SLOT(recei_fro_logic_thermostat(THERMOSTAT)), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_logic_thermostat_done()), logic_thread, SLOT(recei_fro_hardware_thermostat_done()), Qt::QueuedConnection);
+    /* 恒温操作时GUI实时更新thermostat_duty */
+    connect(hardware_thread, SIGNAL(send_to_GUI_thermostat_duty_update(int)), this, SLOT(recei_fro_hard_thermostat_duty_update(int)), Qt::QueuedConnection);
 
     /* 逻辑线程发送蜂鸣器控制信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_beep(BEEP)), hardware_thread, SLOT(recei_fro_logic_beep(BEEP)), Qt::QueuedConnection);
 
     /* 逻辑线程发送气泵控制信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_pump(PUMP)), hardware_thread, SLOT(recei_fro_logic_pump(PUMP)),Qt::QueuedConnection);
+    connect(hardware_thread, SIGNAL(send_to_GUI_pump_duty_update(int)), this, SLOT(recei_fro_hard_pump_duty_update(int)),Qt::QueuedConnection);
 
-    /* 恒温操作时GUI实时更新duty */
-    connect(hardware_thread, SIGNAL(send_to_GUI_duty_update(int)), this, SLOT(recei_fro_hard_duty_update(int)), Qt::QueuedConnection);
+    /* 逻辑线程发送电磁阀控制信号给硬件线程 */
+    connect(logic_thread, SIGNAL(send_to_hard_magnetic(MAGNETIC)), hardware_thread, SLOT(recei_fro_logic_magnetic(MAGNETIC)), Qt::QueuedConnection);
+    connect(hardware_thread, SIGNAL(send_to_GUI_magnetic_update(MAGNETIC)), this, SLOT(recei_fro_hard_magnetic_update(MAGNETIC)), Qt::QueuedConnection);
 
     /* 按下quit按钮后关机 */
     connect(this, SIGNAL(send_to_hardware_close_hardware()), hardware_thread, SLOT(recei_fro_GUI_close_hardware()), Qt::QueuedConnection);
@@ -74,7 +78,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     ui->preset_temp->setText("preset temp:");
 
     /* 显示系统气泵、电磁阀、加热带的初始状态 */
-    ui->pump_speed_value->setText("0 r/min");
+    ui->pump_speed_value->setText("0.0/125.0 us");
     ui->OFF1->setText("OFF");
     ui->OFF2->setText("OFF");
     ui->OFF3->setText("OFF");
@@ -89,8 +93,6 @@ MainWindow::~MainWindow()
     delete logic_thread;
     delete hardware_thread;
     delete dataprocess_thread;
-
-    qDebug() << "delete something" << endl;
 }
 
 void MainWindow::on_Quit_Button_clicked()
@@ -112,11 +114,43 @@ void MainWindow::timerUpdate()
     ui->datetime->setText(datetime.toString("yyyy.MM.dd hh:mm"));
 }
 
-/* 接收来自硬件线程的实时duty值 */
-void MainWindow::recei_fro_hard_duty_update(int duty)
+/* 接收来自硬件线程的恒温实时duty值 */
+void MainWindow::recei_fro_hard_thermostat_duty_update(int duty_info)
 {
-    /* 将duty换算成ms单位，再除以周期得到占空比 */
-    ui->heat_duty_evap_value->setText(QString::number(duty/1000000.0, 'f', 1) + "/10.0 ms");
+    /* 将duty换算成ms单位 */
+    ui->heat_duty_evap_value->setText(QString::number(duty_info/1000000.0, 'f', 1) + "/10.0 ms");
+}
+
+/* 接收来自硬件线程的开启气泵时duty值 */
+void MainWindow::recei_fro_hard_pump_duty_update(int duty_info)
+{
+    /* 将duty换算成us单位 */
+    ui->pump_speed_value->setText(QString::number(duty_info/1000.0, 'f', 1) + "/125.0 us");
+}
+
+void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
+{
+    if(magnetic_info.M1 == HIGH)
+        ui->OFF1->setText("ON");
+    else
+        ui->OFF1->setText("OFF");
+
+    if(magnetic_info.M2 == HIGH)
+        ui->OFF2->setText("ON");
+    else
+        ui->OFF2->setText("OFF");
+
+
+    if(magnetic_info.M3 == HIGH)
+        ui->OFF3->setText("ON");
+    else
+        ui->OFF3->setText("OFF");
+
+
+    if(magnetic_info.M4 == HIGH)
+        ui->OFF4->setText("ON");
+    else
+        ui->OFF4->setText("OFF");
 }
 
 void MainWindow::result_fro_hardware_close_hardware()//退出应用程序,执行关机命令

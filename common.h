@@ -41,7 +41,7 @@ enum THERMO{
 };
 
 typedef struct{
-    int thermo_switch;//加热带电路开关，STOP? START?
+    int thermo_switch;//加热带电路开关，HIGH? LOW?
     float preset_temp;//预设温度
     int hold_time;//蒸发时间
 } THERMOSTAT;
@@ -52,16 +52,16 @@ typedef struct{
 } BEEP;
 
 typedef struct{
-    int pump_switch;//气泵电路开关，OPEN? CLOSE?
+    int pump_switch;//气泵电路开关，HIGH? LOW?
     int pump_duty;//PWM占空比
     int hold_time;//开启时间
 } PUMP;
 
 typedef struct{
     int M1;//电磁阀1的状态，下同HIGH? LOW?
-    int M2;//
-    int M3;//
-    int M4;//
+    int M2;
+    int M3;
+    int M4;
 } MAGNETIC;
 
 #ifdef __cplusplus
