@@ -24,6 +24,7 @@ private:
     THERMOSTAT thermostat_para;//加热带控制相关参数
     PUMP pump_para;//气泵控制相关参数
     MAGNETIC magnetic_para;//电磁阀状态控制相关参数
+    SAMPLE sample_para;
 
 signals:
     /* 发送给硬件控制线程的恒温信号 */
@@ -37,6 +38,9 @@ signals:
 
     /* 发送给硬件线程的电磁阀控制信号 */
     void send_to_hard_magnetic(MAGNETIC magnetic_para);
+
+    /* 发送给数据处理线程的采样控制信号 */
+    void send_to_dataproc_sample(SAMPLE sample_para);
 
 public slots:
     /* 处理来自硬件线程恒温完成的信号 */

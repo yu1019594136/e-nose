@@ -13,7 +13,7 @@ extern "C"
 {
 #endif
 
-#define WAIT_CONVERSION 50000
+#define WAIT_CONVERSION 0
 void tlc1543_Init(int gpiocs);
 void tlc1543_Transfer(uint16_t *TxBuf, uint16_t *RxBuf, int len);
 //void tlc1543_Transfer_half_duplex(uint8_t *TxBuf, uint8_t *RxBuf, int len);

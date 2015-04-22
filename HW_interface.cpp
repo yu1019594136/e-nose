@@ -16,9 +16,9 @@
 #include "GPIO.h"
 #include "ds18b20.h"
 #include "PWM.h"
-#include "tlc1543.h"
 #include "pid.h"
 #include "sht21.h"
+#include "tlc1543.h"
 
 /* 定义GPIO结构体以进行初始化,高电平打开，低电平关闭 */
 GPIO_Init_Struct gpio47_Beep;//蜂鸣器，用于声音提示
@@ -33,13 +33,6 @@ GPIO_Init_Struct gpio68_M4;//电磁阀4
 extern char *w1_dev1;
 //extern char *w1_dev2;
 
-/* SPI通信缓冲区 */
-uint16_t tlc1543_txbuf[1] = {0};	//SPI通信发送缓冲区
-uint16_t tlc1543_rxbuf[1] = {0};	//SPI通信接收缓冲区
-uint16_t channel = 0;		//要转换的通道号，取值0x00-0x0D，
-uint16_t count = 10;
-float vol = 0.0;
-
 /* 蒸发室和反应室pid恒温控制 */
 uint32_t period = 0;
 float temperature = 0.0;
@@ -49,9 +42,10 @@ int d_temp = 0;
 int last_duty = 0;
 
 /* 时间函数相关 */
-struct tm *tm_ptr;
-time_t the_time;
-char filename_time[15]={0};
+struct timeval start;
+struct timeval end;
+struct timeval end1;
+long diff = 0;
 
 /* 定义PWM结构体以进行初始化 */
 PWM_Init_Struct pwm_8_13_airpump;//该PWM输出用于控制气泵转速
@@ -121,6 +115,9 @@ void init_hardware(void)
 
     /* 载入所有相关的恒温控制参数 */
     pid_Init();
+
+    /* 片选线用gpio31 */
+    tlc1543_Init(31);
 }
 
 //Switch = HIGH,表示打开;Switch = LOW,表示关闭
@@ -153,104 +150,6 @@ void M4_Switch(int Switch)
     gpio_set_value(&gpio68_M4,Switch);
 }
 
-/*******采集电压测试***********#include "tlc1543.h"******/
-void collect_data(void)
-{
-    /* 片选线用gpio31 */
-    tlc1543_Init(31);
-    printf("采集电池电压测试开始!\n");
-
-
-    channel = 0;
-    tlc1543_txbuf[0] = (channel<<12)| 0x0c00 ;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-    tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//第一个转换数据不准确，丢弃
-    usleep(WAIT_CONVERSION);
-
-    while(count--)
-    {
-        channel = 1;
-        tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        //vol = ((tlc1543_rxbuf[0])*5.07)/65536;//12位精度
-        //vol = ((tlc1543_rxbuf[0]>>8)*5.07)/256;//8位精度
-        printf("WSP2110\t= %.3f V\t",vol);
-
-        channel = 2;
-        tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("MICS-5526 = %.3f V\t",vol);
-
-        channel = 3;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("MICS-5521 = %.3f V\t",vol);
-
-        channel = 4;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("TGS2611\t= %.3f V\t",vol);
-
-        channel = 5;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("TGS2620\t= %.3f V\t",vol);
-
-        channel = 6;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("MICS-5121 = %.3f V\t",vol);
-
-        channel = 7;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("MICS-5524 = %.3f V\t",vol);
-
-        channel = 8;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("TGS880\t= %.3f V\t",vol);
-
-        channel = 9;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("MP502\t= %.3f V\t",vol);
-
-        channel = 10;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("TGS2602\t= %.3f V\t",vol);
-
-        channel = 0;
-        tlc1543_txbuf[0] = (channel<<12) | 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-        tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-        usleep(WAIT_CONVERSION);
-        vol = (tlc1543_rxbuf[0]*5.07)/65535;//16位精度
-        printf("Battery\n= %.3f V\n",vol);
-
-    }
-    tlc1543_Close();
-}
-
 void Application_quit(int seconds)
 {
     pid_t new_pid;
@@ -280,6 +179,9 @@ void Application_quit(int seconds)
  */
 void close_hardware(void)
 {
+    /* 关闭tlc1543 */
+    tlc1543_Close();
+
     /* 关闭各个PWM输出 */
     pwm_close(&pwm_8_13_airpump);
     pwm_close(&pwm_9_22_fanyingshi);

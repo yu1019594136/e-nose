@@ -25,20 +25,28 @@ void LogicControlThread::run()
 //    emit send_to_hard_beep(beep_para);
 
     /* 发送电磁阀控制信号给硬件线程 */
-    magnetic_para.M1 = LOW;//HIGH
-    magnetic_para.M2 = HIGH;//LOW
-    magnetic_para.M3 = HIGH;//LOW
-    magnetic_para.M4 = HIGH;//HIGH
+    //magnetic_para.M1 = HIGH;
+    magnetic_para.M1 = LOW;
+    //magnetic_para.M2 = HIGH;
+    magnetic_para.M2 = LOW;
+    //magnetic_para.M3 = HIGH;
+    magnetic_para.M3 = LOW;
+    //magnetic_para.M4 = HIGH;
+    magnetic_para.M4 = LOW;
     emit send_to_hard_magnetic(magnetic_para);
 
     msleep(500);
 
     /* 打开气泵清洗气路 */
-    pump_para.pump_switch = HIGH;
+    pump_para.pump_switch = LOW;
     pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-    pump_para.hold_time = 25000;//单位ms
+    pump_para.hold_time = 20000;//单位ms
     emit send_to_hard_pump(pump_para);
 
+    sample_para.filename_prefix = "test_data";
+    sample_para.sample_freq = 100;//单位Hz,每个通道的采样频率
+    sample_para.sample_time = 1;//单位s, 每个通道的采样时间长度
+    emit send_to_dataproc_sample(sample_para);
 
     while(!stopped)
     {

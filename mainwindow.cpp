@@ -21,6 +21,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <BEEP>("BEEP");
     qRegisterMetaType <PUMP>("PUMP");
     qRegisterMetaType <MAGNETIC>("MAGNETIC");
+    qRegisterMetaType <SAMPLE>("SAMPLE");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -46,6 +47,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 逻辑线程发送电磁阀控制信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_magnetic(MAGNETIC)), hardware_thread, SLOT(recei_fro_logic_magnetic(MAGNETIC)), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_GUI_magnetic_update(MAGNETIC)), this, SLOT(recei_fro_hard_magnetic_update(MAGNETIC)), Qt::QueuedConnection);
+
+    /* 逻辑线程发送给数据处理线程的采样控制信号 */
+    connect(logic_thread, SIGNAL(send_to_dataproc_sample(SAMPLE)), dataprocess_thread, SLOT(recei_fro_logic_sample(SAMPLE)), Qt::QueuedConnection);
 
     /* 按下quit按钮后关机 */
     connect(this, SIGNAL(send_to_hardware_close_hardware()), hardware_thread, SLOT(recei_fro_GUI_close_hardware()), Qt::QueuedConnection);
