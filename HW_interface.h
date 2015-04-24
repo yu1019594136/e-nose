@@ -17,8 +17,6 @@ void M3_Switch(int Switch);
 void M4_Switch(int Switch);
 
 void get_realtime_info(GUI_REALTIME_INFO *realtime_info);
-void collect_data(void);
-
 
 /* 退出应用程序，并启动关机进程 */
 void Application_quit(int seconds);

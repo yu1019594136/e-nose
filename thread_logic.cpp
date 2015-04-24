@@ -1,4 +1,5 @@
 #include "thread_logic.h"
+#include <string.h>
 #include "QDebug"
 
 /*********************逻辑控制线程*****************************/
@@ -11,7 +12,7 @@ LogicControlThread::LogicControlThread(QObject *parent) :
 void LogicControlThread::run()
 {
     /* 等待其他线程启动完成 */
-    msleep(100);
+    msleep(500);
 
     /* 开机后先让蒸发室从室温预热到35摄氏度 */
     thermostat_para.thermo_switch = STOP;
@@ -43,16 +44,17 @@ void LogicControlThread::run()
     pump_para.hold_time = 20000;//单位ms
     emit send_to_hard_pump(pump_para);
 
-    sample_para.filename_prefix = "test_data";
-    sample_para.sample_freq = 100;//单位Hz,每个通道的采样频率
-    sample_para.sample_time = 1;//单位s, 每个通道的采样时间长度
+    sample_para.sample_freq = 50;//单位Hz,每个通道的采样频率
+    sample_para.sample_time = 180;//单位s, 每个通道的采样时间长度
+    sample_para.filename_prefix = "/root/qt_program/test_data";//数据文件路径以及文件名前缀,
     emit send_to_dataproc_sample(sample_para);
 
     while(!stopped)
     {
-        sleep(1);
+        //sleep(1);
     }
 
+    qDebug("logicthread down!\n");
     stopped = false;
 }
 void LogicControlThread::stop()

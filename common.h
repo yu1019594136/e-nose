@@ -66,8 +66,8 @@ typedef struct{
 
 typedef struct{
     float sample_freq;//每个通道的采样频率
-    long sample_time;//每个通道的时间长度
-    char *filename_prefix;//数据文件名前缀
+    int sample_time;//每个通道的时间长度
+    char *filename_prefix;//数据文件路径以及文件名前缀
 } SAMPLE;
 
 

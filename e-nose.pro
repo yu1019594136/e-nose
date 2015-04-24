@@ -20,7 +20,6 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     ds18b20.c \
-    GPIO.c \
     i2c.c \
     pid.c \
     PWM.c \
@@ -32,7 +31,8 @@ SOURCES += main.cpp\
     thread_hardware.cpp \
     thread_data_proc.cpp \
     HW_interface.cpp \
-    common.c
+    common.c \
+    GPIO.c
 
 HEADERS  += mainwindow.h \
     ds18b20.h \

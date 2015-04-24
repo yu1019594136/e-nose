@@ -24,7 +24,7 @@
 int SPI_Transfer(int spi_fd, int message_len, struct spi_ioc_transfer *tr)
 {
 	int ret;
-	 ret = ioctl(spi_fd, SPI_IOC_MESSAGE(message_len), tr);
+     ret = ioctl(spi_fd, SPI_IOC_MESSAGE(message_len), tr);
 		if (ret < 1)
 		{
 			printf("can't send spi message");

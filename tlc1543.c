@@ -23,7 +23,7 @@ static GPIO_Init_Struct gpio_cs;		//用于片选线
 
 static uint32_t mode = 0;				//（POL，PHA），MODE0=（0,0）MODE1=（0,1）MODE2=（1,0）MODE3=（1,1）,POL=0表示时钟空闲为低电平，1为高电平；PHA=0表示采样发生在时钟的第一个跳变边沿，1表示第二个跳变边沿
 static uint8_t bits = 16;				//每次通信的比特长度，这个长度依从设备而不同
-static uint32_t speed = 500000;			//SCLK的频率，单位Hz
+static uint32_t speed = 4000000;			//SCLK的频率，单位Hz
 static uint16_t delay = 0;				//当有多个从设备时，本次通信传输完成后在取消选中本片选线之前，延长多长时间（这个时间过后接着取消本片选线，选中其他片选线开始下一次传输）
 
 static struct spi_ioc_transfer tr;		//用于进行全双工通信配置，具体参考spidev.h

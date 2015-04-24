@@ -42,16 +42,15 @@ int d_temp = 0;
 int last_duty = 0;
 
 /* 时间函数相关 */
-struct timeval start;
-struct timeval end;
-struct timeval end1;
-long diff = 0;
+//struct timeval start;
+//struct timeval end;
+//struct timeval end1;
+//long diff = 0;
 
 /* 定义PWM结构体以进行初始化 */
 PWM_Init_Struct pwm_8_13_airpump;//该PWM输出用于控制气泵转速
 PWM_Init_Struct pwm_9_22_fanyingshi;//该PWM输出用于控制反应室加热带
 PWM_Init_Struct pwm_9_42_zhenfashi;//该PWM输出用于控制蒸发室加热带
-
 
 /* 上电后系统初始化各个硬件电路，配置操作系统状态，等待用户操作 */
 void init_hardware(void)
@@ -118,6 +117,41 @@ void init_hardware(void)
 
     /* 片选线用gpio31 */
     tlc1543_Init(31);
+
+}
+
+void collect_data(void)
+{
+//    /* 片选线用gpio31 */
+//    tlc1543_Init(31);
+
+//    channel = 0;
+//    tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
+//    //tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
+//    //usleep(WAIT_CONVERSION);
+
+//    for(i = 1; i < 10; i++)
+//    {
+//        channel = i;
+//        tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
+//        //tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
+//        //fprintf(fp, "%d\t", tlc1543_rxbuf[0]);
+//        //fprintf(fp, "%.3f\t", (tlc1543_rxbuf[0] * 5.02) / 65536);
+//        qDebug("%.3f\t", (tlc1543_rxbuf[0] * 5.02) / 65536);
+//        //usleep(WAIT_CONVERSION);
+//    }
+//    channel = 0;
+//    tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
+//    //tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
+//    //fprintf(fp, "%d\n", tlc1543_rxbuf[0]);
+//    //fprintf(fp, "%.3f\n", (tlc1543_rxbuf[0] * 5.02) / 65536);
+//    qDebug("%.3f\n", (tlc1543_rxbuf[0] * 5.02) / 65536);
+
+//    //usleep(WAIT_CONVERSION);
+
+
+//    /* 关闭tlc1543 */
+//    tlc1543_Close();
 }
 
 //Switch = HIGH,表示打开;Switch = LOW,表示关闭

@@ -81,11 +81,16 @@ void HardWareControlThread::run()
             /* 恒温时将实时的duty值发送给GUI线程 */
             emit send_to_GUI_thermostat_duty_update(duty);
         }
-
         msleep(200);
     }
 
+    /* 操作结束前，
+     * 关闭各个功能硬件电路，恢复系统配置；
+     */
+    close_hardware();
+
     stopped = false;
+    qDebug("hardwarethread down!\n");
 }
 
 void HardWareControlThread::stop()
@@ -144,6 +149,10 @@ void HardWareControlThread::recei_fro_logic_beep(BEEP beep_para)
         Beep_Switch(HIGH);//调用函数打开蜂鸣器
         beep.beep_count--;
     }
+    else
+    {
+        Beep_Switch(LOW);//调用函数打开蜂鸣器
+    }
 }
 
 void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
@@ -158,13 +167,24 @@ void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
         set_pwm_duty(&pwm_8_13_airpump, pump.pump_duty);
 
         /* 接通气泵电路 */
-        Pump_S_Switch(pump.pump_switch);
+        Pump_S_Switch(HIGH);
 
         /* 启动计时 */
         pump_timer->start(pump.hold_time);
 
         /* 更新气泵硬件信息到GUI线程 */
         emit send_to_GUI_pump_duty_update(pump.pump_duty);
+    }
+    else
+    {
+        /* 断开气泵电路 */
+        Pump_S_Switch(LOW);
+
+        /* 配置PWM波 */
+        set_pwm_duty(&pwm_8_13_airpump, 0);
+
+        /* 更新气泵硬件信息到GUI线程 */
+        emit send_to_GUI_pump_duty_update(0);
     }
 }
 
@@ -182,14 +202,6 @@ void HardWareControlThread::recei_fro_logic_magnetic(MAGNETIC magnetic_para)
     M4_Switch(magnetic.M4);
 
     emit send_to_GUI_magnetic_update(magnetic);
-}
-
-void HardWareControlThread::recei_fro_GUI_close_hardware()
-{
-    close_hardware();
-
-    /* 告诉逻辑线程硬件已经关闭 */
-    emit return_to_GUI_close_hardware();
 }
 
 void HardWareControlThread::beep_timeout()

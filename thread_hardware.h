@@ -55,9 +55,6 @@ signals:
     /* 恒温完成，通知逻辑线程 */
     void send_to_logic_thermostat_done();
 
-    /* 返回给GUI线程关闭硬件的操作结果 */
-    void return_to_GUI_close_hardware();
-
 public slots:
     /* 处理来自逻辑线程的恒温信号 */
     void recei_fro_logic_thermostat(THERMOSTAT thermostat_para);
@@ -70,9 +67,6 @@ public slots:
 
     /* 处理来自逻辑控制线程的电磁阀控制信号 */
     void recei_fro_logic_magnetic(MAGNETIC magnetic_para);
-
-    /* 处理来自GUI线程关闭硬件信号 */
-    void recei_fro_GUI_close_hardware();
 
 private slots:
     /* 蜂鸣器定时溢出 */

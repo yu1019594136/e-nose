@@ -51,13 +51,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 逻辑线程发送给数据处理线程的采样控制信号 */
     connect(logic_thread, SIGNAL(send_to_dataproc_sample(SAMPLE)), dataprocess_thread, SLOT(recei_fro_logic_sample(SAMPLE)), Qt::QueuedConnection);
 
-    /* 按下quit按钮后关机 */
-    connect(this, SIGNAL(send_to_hardware_close_hardware()), hardware_thread, SLOT(recei_fro_GUI_close_hardware()), Qt::QueuedConnection);
-    connect(hardware_thread, SIGNAL(return_to_GUI_close_hardware()), this, SLOT(result_fro_hardware_close_hardware()), Qt::QueuedConnection);
-
-    logic_thread->start();
     hardware_thread->start();
     dataprocess_thread->start();
+    logic_thread->start();
 
     /* 开机显示时间 */
     QDateTime datetime = QDateTime::currentDateTime();
@@ -101,8 +97,25 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_Quit_Button_clicked()
 {
-    /* 通知硬件线程关闭硬件 */
-    emit send_to_hardware_close_hardware();
+    /* 将活跃状态的线程关闭 */
+    if(logic_thread->isRunning())
+        logic_thread->stop();
+    while(!logic_thread->isFinished());
+
+    if(dataprocess_thread->isRunning())
+        dataprocess_thread->stop();
+    while(!dataprocess_thread->isFinished());
+
+    if(hardware_thread->isRunning())
+        hardware_thread->stop();
+    while(!hardware_thread->isFinished());
+
+    /* 5s内应用程序关机 */
+//    Application_quit(5);
+
+    /* 退出事件循环，结束程序 */
+    QApplication *p;
+    p->quit();
 }
 
 void MainWindow::recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info)
@@ -155,29 +168,4 @@ void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
         ui->OFF4->setText("ON");
     else
         ui->OFF4->setText("OFF");
-}
-
-void MainWindow::result_fro_hardware_close_hardware()//退出应用程序,执行关机命令
-{
-    /* 将活跃状态的线程关闭 */
-    if(logic_thread->isRunning())
-        logic_thread->stop();
-
-    if(hardware_thread->isRunning())
-        hardware_thread->stop();
-
-    if(dataprocess_thread->isRunning())
-        dataprocess_thread->stop();
-
-    /* 等待三个子线程退出后再结束程序 */
-    while(!logic_thread->isFinished());
-    while(!hardware_thread->isFinished());
-    while(!dataprocess_thread->isFinished());
-
-    /* 启动另一个进程执行关机命令,5s后关机 */
-    //Application_quit(5);
-
-    /* 退出时间循环，结束程序 */
-    QApplication *p;
-    p->quit();
 }

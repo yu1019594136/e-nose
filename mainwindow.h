@@ -21,8 +21,6 @@ public:
     ~MainWindow();
 
 signals:
-    /* 通知硬件线程关闭硬件 */
-    void send_to_hardware_close_hardware();
 
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
@@ -31,9 +29,6 @@ private slots:
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
     void recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info);
-
-    /* 接收来自硬件线程的关闭硬件操作结果 */
-    void result_fro_hardware_close_hardware();
 
     /* 接收来自硬件线程的恒温实时duty值 */
     void recei_fro_hard_thermostat_duty_update(int duty_info);
