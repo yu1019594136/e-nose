@@ -32,7 +32,8 @@ SOURCES += main.cpp\
     thread_data_proc.cpp \
     HW_interface.cpp \
     common.c \
-    GPIO.c
+    GPIO.c \
+    plot_widget.cpp
 
 HEADERS  += mainwindow.h \
     ds18b20.h \
@@ -48,7 +49,8 @@ HEADERS  += mainwindow.h \
     thread_logic.h \
     thread_hardware.h \
     thread_data_proc.h \
-    common.h
+    common.h \
+    plot_widget.h
 
 FORMS    += mainwindow.ui
 

@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QTimer>
+#include "plot_widget.h"
 #include "thread_logic.h"
 #include "thread_data_proc.h"
 #include "thread_hardware.h"
@@ -19,6 +20,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+
+protected:
 
 signals:
 
@@ -45,6 +48,7 @@ private:
     HardWareControlThread *hardware_thread;
     DataProcessThread *dataprocess_thread;
     QTimer *timer;
+    Plot_Widget *plot_widget;
 };
 
 #endif // MAINWINDOW_H

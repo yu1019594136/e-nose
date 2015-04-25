@@ -28,7 +28,7 @@
    <bool>false</bool>
   </property>
   <widget class="QWidget" name="centralWidget">
-   <widget class="QTabWidget" name="tabWidget">
+   <widget class="QTabWidget" name="Qtabwidget">
     <property name="geometry">
      <rect>
       <x>0</x>
@@ -52,7 +52,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideMiddle</enum>
@@ -63,7 +63,7 @@
     <property name="movable">
      <bool>false</bool>
     </property>
-    <widget class="QWidget" name="tab_3">
+    <widget class="QWidget" name="tab_1">
      <attribute name="title">
       <string> welcome</string>
      </attribute>
@@ -89,7 +89,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab">
+    <widget class="QWidget" name="tab_2">
      <attribute name="title">
       <string>system condition</string>
      </attribute>
@@ -474,7 +474,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QWidget" name="tab_2">
+    <widget class="QWidget" name="tab_3">
      <attribute name="title">
       <string>parameter set</string>
      </attribute>

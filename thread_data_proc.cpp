@@ -16,37 +16,6 @@
 #include "tlc1543.h"
 #include "HW_interface.h"
 
-/* setitimer定时事件代码
-定时事件代码的执行时间一定不能比定时时间还长，否则产生定时丢失，程序运行将出错，数据处理线程的出错将影响到其他线程的工作。
-*/
-//void timer_func(int signal_type)
-//{
-//    gettimeofday(&start, NULL);
-
-//    sample_flag = true;
-
-//    sample_count--;
-
-//    if(sample_count == 0)
-//    {
-//        value.it_value.tv_sec = 0;
-//        value.it_value.tv_usec = 0;
-//        value.it_interval = value.it_value;
-
-//        setitimer(SIGALRM, &value, NULL);
-//        sample_flag = false;
-//    }
-//    else
-//    {
-//        signal(SIGALRM, timer_func);
-//    }
-
-//    gettimeofday(&end, NULL);
-
-//    diff = 1000000 * (end.tv_sec - start.tv_sec) + end.tv_usec - start.tv_usec;
-//    qDebug("diff = %ld\n", diff);
-//}
-
 /*********************数据处理线程*****************************/
 DataProcessThread::DataProcessThread(QObject *parent) :
     QThread(parent)

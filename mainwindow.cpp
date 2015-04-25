@@ -2,6 +2,7 @@
 #include <QWSServer>
 #include <QDateTime>
 #include <QDebug>
+#include <QPainter>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "HW_interface.h"
@@ -13,6 +14,12 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 {
     /* 根据ui布局设置窗口 */
     ui->setupUi(this);
+
+    /* 实例化一个tab页用于绘图 */
+    plot_widget = new Plot_Widget(this);
+    ui->Qtabwidget->addTab(plot_widget, "data plot");
+
+    /* 隐藏鼠标 */
     QWSServer::setCursorVisible(false);
 
     /* 注册元类型 */
