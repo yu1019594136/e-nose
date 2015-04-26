@@ -42,6 +42,7 @@ public slots:
     /* 接收来自硬件线程的电磁阀状态信息 */
     void recei_fro_hard_magnetic_update(MAGNETIC magnetic_info);
 
+
 private:
     Ui::MainWindow *ui;
     LogicControlThread *logic_thread;

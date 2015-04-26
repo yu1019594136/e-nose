@@ -22,9 +22,8 @@ protected:
 private:
     volatile bool stopped;
     SAMPLE sample;//采样控制参数
+    PLOT_INFO plot_info;//绘图尺寸
 
-    volatile long sample_count;
-    volatile long sample_count_real;
     volatile bool sample_flag;
 
     FILE *fp;
@@ -32,14 +31,10 @@ private:
     time_t the_time;
     char *filename;
 
-    u_int16_t tlc1543_txbuf[1];	//SPI通信发送缓冲区
-    u_int16_t tlc1543_rxbuf[1];	//SPI通信接收缓冲区
-    u_int16_t channel;		//要转换的通道号，取值0x00-0x0D，
-    int i;
-
     QTimer *sample_timer;
 
 signals:
+    void send_to_PlotWidget_plotdata(PLOT_INFO plot_info);
 
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */

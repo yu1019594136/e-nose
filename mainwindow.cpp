@@ -1,6 +1,7 @@
 #include <unistd.h>
 #include <QWSServer>
 #include <QDateTime>
+#include <QMetaType>
 #include <QDebug>
 #include <QPainter>
 #include "mainwindow.h"
@@ -8,6 +9,12 @@
 #include "HW_interface.h"
 
 Q_DECLARE_METATYPE(GUI_REALTIME_INFO)
+Q_DECLARE_METATYPE(THERMOSTAT)
+Q_DECLARE_METATYPE(BEEP)
+Q_DECLARE_METATYPE(PUMP)
+Q_DECLARE_METATYPE(MAGNETIC)
+Q_DECLARE_METATYPE(SAMPLE)
+Q_DECLARE_METATYPE(PLOT_INFO)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -29,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <PUMP>("PUMP");
     qRegisterMetaType <MAGNETIC>("MAGNETIC");
     qRegisterMetaType <SAMPLE>("SAMPLE");
+    qRegisterMetaType <PLOT_INFO>("PLOT_INFO");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -57,6 +65,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 逻辑线程发送给数据处理线程的采样控制信号 */
     connect(logic_thread, SIGNAL(send_to_dataproc_sample(SAMPLE)), dataprocess_thread, SLOT(recei_fro_logic_sample(SAMPLE)), Qt::QueuedConnection);
+
+    /* plot_widget对象接收来自数据处理线程的采样数据绘图命令 */
+    connect(dataprocess_thread, SIGNAL(send_to_PlotWidget_plotdata(PLOT_INFO)), plot_widget, SLOT(recei_fro_datapro_dataplot(PLOT_INFO)), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -176,3 +187,4 @@ void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
     else
         ui->OFF4->setText("OFF");
 }
+

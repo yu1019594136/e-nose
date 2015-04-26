@@ -70,7 +70,11 @@ typedef struct{
     char *filename_prefix;//数据文件路径以及文件名前缀
 } SAMPLE;
 
-
+typedef struct{
+    long width;
+    long height;
+    unsigned long sample_count_real;//实际操作的采样次数
+} PLOT_INFO;
 #ifdef __cplusplus
 }
 #endif
