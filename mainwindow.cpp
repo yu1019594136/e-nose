@@ -15,6 +15,7 @@ Q_DECLARE_METATYPE(PUMP)
 Q_DECLARE_METATYPE(MAGNETIC)
 Q_DECLARE_METATYPE(SAMPLE)
 Q_DECLARE_METATYPE(PLOT_INFO)
+Q_DECLARE_METATYPE(SYSTEM_PARA_SET)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -37,6 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <MAGNETIC>("MAGNETIC");
     qRegisterMetaType <SAMPLE>("SAMPLE");
     qRegisterMetaType <PLOT_INFO>("PLOT_INFO");
+    qRegisterMetaType <SYSTEM_PARA_SET>("SYSTEM_PARA_SET");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -68,6 +70,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* plot_widget对象接收来自数据处理线程的采样数据绘图命令 */
     connect(dataprocess_thread, SIGNAL(send_to_PlotWidget_plotdata(PLOT_INFO)), plot_widget, SLOT(recei_fro_datapro_dataplot(PLOT_INFO)), Qt::QueuedConnection);
+
+    /* 参数面板中的参数并发送给逻辑线程 */
+    connect(this, SIGNAL(send_to_logic_ststem_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -103,6 +108,10 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     ui->OFF4->setText("OFF");
     ui->heat_duty_evap_value->setText("0.0/10.0 ms");
     ui->heat_duty_reac_value->setText("0.0/10.0 ms");
+
+    /* 默认单次采样 */
+    ui->radioButton_single->setChecked(true);
+    ui->radioButton_continue->setChecked(false);
 }
 
 MainWindow::~MainWindow()
@@ -188,3 +197,22 @@ void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
         ui->OFF4->setText("OFF");
 }
 
+/* 按下al-set按键后读取参数面板中的参数并发送给逻辑线程 */
+void MainWindow::on_pushButton_10_clicked()
+{
+    system_para_set.preset_temp = ui->set_evapor_temp->value();
+    system_para_set.hold_time = ui->set_evapor_time->value();
+    system_para_set.sample_freq = ui->set_sample_rate->value();
+    system_para_set.sample_time = ui->set_sample_time->value();
+
+    if(ui->radioButton_single->isChecked())
+        system_para_set.sample_style = SINGLE;
+    if(ui->radioButton_continue->isChecked())
+        system_para_set.sample_style = CONTINUE;
+
+    system_para_set.evapor_clear_time = ui->set_evapor_clear->value();
+    system_para_set.reac_clear_time = ui->set_reac_clear->value();
+    system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
+
+    emit send_to_logic_ststem_para_set(system_para_set);
+}

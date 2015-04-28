@@ -24,10 +24,13 @@ public:
 protected:
 
 signals:
+    void send_to_logic_ststem_para_set(SYSTEM_PARA_SET system_para_set_info);
 
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
     void timerUpdate();//用于更新时间
+
+    void on_pushButton_10_clicked();
 
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
@@ -50,6 +53,8 @@ private:
     DataProcessThread *dataprocess_thread;
     QTimer *timer;
     Plot_Widget *plot_widget;
+    SYSTEM_STATE system_state;  //系统控制参数
+    SYSTEM_PARA_SET system_para_set;
 };
 
 #endif // MAINWINDOW_H

@@ -27,6 +27,9 @@ private:
     MAGNETIC magnetic_para;//电磁阀状态控制相关参数
     SAMPLE sample_para;
 
+    SYSTEM_STATE system_state;//系统状态
+    SYSTEM_PARA_SET system_para_set;//系统控制参数
+
 signals:
     /* 发送给硬件控制线程的恒温信号 */
     void send_to_hard_evapor_thermostat(THERMOSTAT thermostat_para);
@@ -46,6 +49,9 @@ signals:
 public slots:
     /* 处理来自硬件线程恒温完成的信号 */
     void recei_fro_hardware_thermostat_done();
+
+    /* 接收GUI线程发送来的系统控制参数 */
+    void recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
 private slots:
 
