@@ -4,6 +4,7 @@
 #include <QMetaType>
 #include <QDebug>
 #include <QPainter>
+#include <QFile>
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "HW_interface.h"
@@ -26,6 +27,29 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 实例化一个tab页用于绘图 */
     plot_widget = new Plot_Widget(this);
     ui->Qtabwidget->addTab(plot_widget, "data plot");
+
+    /* 从item_file.txt中读取条目添加到UI的comboBox */
+    QString temp;
+    QStringList q_str_list;
+    QFile item_file("/root/qt_program/item_file.txt");
+
+    if(!item_file.open(QIODevice::ReadOnly | QIODevice::Text))
+        qDebug() << "can not open the file:" << item_file.fileName() << endl;
+    else
+    {
+        while(!item_file.atEnd())
+        {
+            temp = item_file.readLine();
+            temp.remove(QChar('\n'));
+            q_str_list.append(temp);
+            //qDebug() << "line = " << temp << endl;
+        }
+        ui->comboBox_data_filepath->addItems(q_str_list);
+        item_file.close();
+    }
+    /* 在最后一个条目中加入分隔符 */
+    ui->comboBox_data_filepath->insertSeparator(ui->comboBox_data_filepath->count() - 1);
+    ui->comboBox_data_filepath->clearEditText();
 
     /* 隐藏鼠标 */
     QWSServer::setCursorVisible(false);
@@ -116,6 +140,34 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
 MainWindow::~MainWindow()
 {
+    /* 将数据表项全部重新写入文件进行保存 */
+    QFile item_file("/root/qt_program/item_file.txt");
+    QString temp;
+    char *item_data;
+    QByteArray ba;
+
+    int i;
+
+    if(!item_file.open(QIODevice::WriteOnly |QIODevice::Truncate | QIODevice::Text))
+        qDebug() << "can not open the file1:" << item_file.fileName() << endl;
+    else
+    {
+        qDebug() << "count = " << ui->comboBox_data_filepath->count() << endl;
+
+        for(i = 0; i < ui->comboBox_data_filepath->count(); i++)
+        {
+            if(ui->comboBox_data_filepath->itemText(i) != "")
+            {
+                temp = ui->comboBox_data_filepath->itemText(i) + "\n";
+                ba = temp.toLatin1();
+                item_data = ba.data();
+                item_file.write(item_data);
+            }
+        }
+        item_file.close();
+    }
+    item_data = NULL;
+
     delete ui;
     delete logic_thread;
     delete hardware_thread;
@@ -215,4 +267,29 @@ void MainWindow::on_pushButton_10_clicked()
     system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
 
     emit send_to_logic_ststem_para_set(system_para_set);
+}
+
+void MainWindow::on_pushButton_clear_current_clicked()
+{
+    if(ui->comboBox_data_filepath->count() == 1 || ui->comboBox_data_filepath->currentText() == "Insert item")
+        qDebug() << "you can not delete (Insert item)" << endl;
+    else if(ui->comboBox_data_filepath->currentText() == "")
+        qDebug() << "you delete nothing" << endl;
+    else
+    {
+        qDebug() << ui->comboBox_data_filepath->currentText() << " was deleted !" << endl;
+        ui->comboBox_data_filepath->removeItem(ui->comboBox_data_filepath->currentIndex());
+    }
+    ui->comboBox_data_filepath->clearEditText();
+
+    qDebug() << "count = " << ui->comboBox_data_filepath->count() << endl;
+}
+
+void MainWindow::on_pushButton_clear_all_clicked()
+{
+    ui->comboBox_data_filepath->clear();
+    ui->comboBox_data_filepath->insertItem(0, tr("Insert item"));
+    ui->comboBox_data_filepath->insertSeparator(0);
+    ui->comboBox_data_filepath->clearEditText();
+    qDebug() << "count = " << ui->comboBox_data_filepath->count() << endl;
 }
