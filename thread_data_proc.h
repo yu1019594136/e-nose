@@ -5,6 +5,7 @@
 #include <QString>
 #include <QTimer>
 #include "common.h"
+#include "qcommon.h"
 #include <sys/types.h>
 
 
@@ -25,12 +26,8 @@ private:
     PLOT_INFO plot_info;//绘图尺寸
 
     volatile bool sample_flag;
-
     FILE *fp;
-    struct tm *tm_ptr;
-    time_t the_time;
     char *filename;
-
     QTimer *sample_timer;
 
 signals:

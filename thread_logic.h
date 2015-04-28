@@ -5,6 +5,7 @@
 #include <QString>
 #include <QTimer>
 #include "common.h"
+#include "qcommon.h"
 
 /*********************逻辑控制线程*****************************/
 class LogicControlThread : public QThread

@@ -1,5 +1,6 @@
 #include "thread_data_proc.h"
 #include <QDebug>
+#include <QDateTime>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -16,8 +17,8 @@
 #include "tlc1543.h"
 #include "HW_interface.h"
 
-int i;
-int j;
+unsigned int i;
+unsigned int j;
 volatile long sample_count;//按照采样时间和采样频率计算出的采样次数
 
 u_int16_t tlc1543_txbuf[1];	//SPI通信发送缓冲区
@@ -38,6 +39,7 @@ DataProcessThread::DataProcessThread(QObject *parent) :
     plot_info.height = 65536;
     plot_info.sample_count_real = 0;
 
+    filename = NULL;
     fp = NULL;
     p_data = NULL;
 
@@ -108,15 +110,14 @@ void DataProcessThread::recei_fro_logic_sample(SAMPLE sample_para)
 {
     int temp_time = 0;
 
+    QDateTime datetime = QDateTime::currentDateTime();
+
     sample.sample_freq = sample_para.sample_freq;
     sample.sample_time = sample_para.sample_time;
-    sample.filename_prefix = sample_para.filename_prefix;
+    sample.filename_prefix = sample_para.filename_prefix + datetime.toString("yyyy.MM.dd-hh_mm_ss") + ".txt";
 
-    filename = (char *)malloc(sizeof(char) * (strlen(sample.filename_prefix) + 25));//25个字符空间用于存储年月日时分秒以及下划线
-
-    (void)time(&the_time);
-    tm_ptr = localtime(&the_time);
-    sprintf(filename, "%s_%d.%d.%d-%d_%d_%d.txt", sample.filename_prefix, tm_ptr->tm_year + 1900, tm_ptr->tm_mon + 1, tm_ptr->tm_mday, tm_ptr->tm_hour, tm_ptr->tm_min, tm_ptr->tm_sec);
+    QByteArray ba = sample.filename_prefix.toLatin1();
+    filename = ba.data();
 
     /* 创建文件保存数据 */
     if((fp=fopen(filename,"w"))==NULL)
@@ -173,7 +174,7 @@ void DataProcessThread::sample_timeout()
             fprintf(fp, "%d\n", p_data[i][9]);
         }
 
-        qDebug("timer stop and data saved in filepath: %s\n", filename);
+        qDebug() <<"timer stop and data saved in filepath:" << sample.filename_prefix << endl;
 
         /* 释放空间，清空相关指针变量 */
         plot_info.sample_count_real = 0;
@@ -186,7 +187,6 @@ void DataProcessThread::sample_timeout()
         p_data = NULL;
         fclose(fp);
         fp = NULL;
-        free(filename);
         filename = NULL;
     }
 }

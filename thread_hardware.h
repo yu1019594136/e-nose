@@ -5,14 +5,8 @@
 #include <QString>
 #include <QTimer>
 #include "common.h"
+#include "qcommon.h"
 #include "pid.h"
-
-/* 需要实时更新的信息 */
-typedef struct{
-    QString ds18b20_temp;
-    QString sht21_temp;
-    QString sht21_humid;
-} GUI_REALTIME_INFO;
 
 /*********************硬件控制线程*****************************/
 class HardWareControlThread : public QThread

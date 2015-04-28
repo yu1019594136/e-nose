@@ -45,7 +45,7 @@ void LogicControlThread::run()
     emit send_to_hard_pump(pump_para);
 
     sample_para.sample_freq = 100;//单位Hz,每个通道的采样频率
-    sample_para.sample_time = 15;//单位s, 每个通道的采样时间长度
+    sample_para.sample_time = 5;//单位s, 每个通道的采样时间长度
     sample_para.filename_prefix = "/root/qt_program/test_data";//数据文件路径以及文件名前缀,
     emit send_to_dataproc_sample(sample_para);
 

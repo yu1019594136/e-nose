@@ -65,16 +65,11 @@ typedef struct{
 } MAGNETIC;
 
 typedef struct{
-    float sample_freq;//每个通道的采样频率
-    int sample_time;//每个通道的时间长度
-    char *filename_prefix;//数据文件路径以及文件名前缀
-} SAMPLE;
-
-typedef struct{
     long width;
     long height;
     unsigned long sample_count_real;//实际操作的采样次数
 } PLOT_INFO;
+
 #ifdef __cplusplus
 }
 #endif
