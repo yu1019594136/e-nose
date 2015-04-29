@@ -15,10 +15,15 @@
 #include <QTextCodec>
 #include <QDebug>
 #include "mainwindow.h"
+#include "myinputpanelcontext.h"
 
 int main(int argc, char *argv[])
 {
     QApplication app(argc, argv);
+
+    MyInputPanelContext *ic = new MyInputPanelContext;
+    app.setInputContext(ic);
+
     MainWindow mainwindow;
     mainwindow.showFullScreen();
     return app.exec();

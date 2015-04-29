@@ -34,7 +34,9 @@ SOURCES += main.cpp\
     common.c \
     GPIO.c \
     plot_widget.cpp \
-    qcommon.cpp
+    qcommon.cpp \
+    myinputpanel.cpp \
+    myinputpanelcontext.cpp
 
 HEADERS  += mainwindow.h \
     ds18b20.h \
@@ -52,9 +54,12 @@ HEADERS  += mainwindow.h \
     thread_data_proc.h \
     common.h \
     plot_widget.h \
-    qcommon.h
+    qcommon.h \
+    myinputpanel.h \
+    myinputpanelcontext.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    myinputpanelform.ui
 
 OTHER_FILES += \
     恒温调节.ods \
