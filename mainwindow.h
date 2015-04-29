@@ -36,6 +36,8 @@ private slots:
 
     void on_pushButton_clear_all_clicked();
 
+    void on_pushButton_9_clicked();
+
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
     void recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info);

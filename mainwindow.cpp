@@ -136,6 +136,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 默认单次采样 */
     ui->radioButton_single->setChecked(true);
     ui->radioButton_continue->setChecked(false);
+
+    /* 程序启动后跳至选项卡0 */
+    ui->Qtabwidget->setCurrentIndex(0);
 }
 
 MainWindow::~MainWindow()
@@ -267,6 +270,9 @@ void MainWindow::on_pushButton_10_clicked()
     system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
 
     emit send_to_logic_ststem_para_set(system_para_set);
+
+    /*  */
+    //ui->Qtabwidget->setCurrentIndex(3);
 }
 
 void MainWindow::on_pushButton_clear_current_clicked()
@@ -292,4 +298,10 @@ void MainWindow::on_pushButton_clear_all_clicked()
     ui->comboBox_data_filepath->insertSeparator(0);
     ui->comboBox_data_filepath->clearEditText();
     qDebug() << "count = " << ui->comboBox_data_filepath->count() << endl;
+}
+
+void MainWindow::on_pushButton_9_clicked()
+{
+    /* 点击设置按钮后跳至参数设定选项卡 */
+    ui->Qtabwidget->setCurrentIndex(2);
 }
