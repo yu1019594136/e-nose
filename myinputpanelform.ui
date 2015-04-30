@@ -35,9 +35,7 @@
     <string>1</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>49</unicode>
-    </char>
+    <string>1</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_4">
@@ -62,9 +60,7 @@
     <string>4</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>52</unicode>
-    </char>
+    <string>4</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_2">
@@ -89,9 +85,7 @@
     <string>2</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>50</unicode>
-    </char>
+    <string>2</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_3">
@@ -116,9 +110,7 @@
     <string>3</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>51</unicode>
-    </char>
+    <string>3</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_5">
@@ -143,9 +135,7 @@
     <string>5</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>53</unicode>
-    </char>
+    <string>5</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_6">
@@ -170,9 +160,7 @@
     <string>6</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>54</unicode>
-    </char>
+    <string>6</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_7">
@@ -197,9 +185,7 @@
     <string>7</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>55</unicode>
-    </char>
+    <string>7</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_8">
@@ -224,9 +210,7 @@
     <string>8</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>56</unicode>
-    </char>
+    <string>8</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_9">
@@ -251,9 +235,7 @@
     <string>9</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>57</unicode>
-    </char>
+    <string>9</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_star">
@@ -278,9 +260,7 @@
     <string>*</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>42</unicode>
-    </char>
+    <string>*</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_0">
@@ -305,9 +285,7 @@
     <string>0</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>48</unicode>
-    </char>
+    <string>0</string>
    </property>
   </widget>
   <widget class="QPushButton" name="panelButton_hash">
@@ -332,9 +310,7 @@
     <string>#</string>
    </property>
    <property name="buttonValue" stdset="0">
-    <char>
-     <unicode>35</unicode>
-    </char>
+    <string>#</string>
    </property>
   </widget>
   <widget class="QPushButton" name="closeButton">

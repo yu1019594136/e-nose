@@ -56,7 +56,8 @@ public:
     MyInputPanel();
 
 signals:
-    void characterGenerated(QChar character);
+    //void characterGenerated(QChar character);
+    void characterGenerated(QString character);
 
 protected:
     bool event(QEvent *e);

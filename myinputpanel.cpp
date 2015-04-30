@@ -48,6 +48,7 @@ MyInputPanel::MyInputPanel()
 {
     form.setupUi(this);
 
+    //绑定全局改变焦点信号槽
     connect(qApp, SIGNAL(focusChanged(QWidget*,QWidget*)),
             this, SLOT(saveFocusWidget(QWidget*,QWidget*)));
 
@@ -126,7 +127,8 @@ void MyInputPanel::saveFocusWidget(QWidget * /*oldFocus*/, QWidget *newFocus)
 
 void MyInputPanel::buttonClicked(QWidget *w)
 {
-    QChar chr = qvariant_cast<QChar>(w->property("buttonValue"));
+    //QChar chr = qvariant_cast<QChar>(w->property("buttonValue"));
+    QString chr = qvariant_cast<QString>(w->property("buttonValue"));
     emit characterGenerated(chr);
 }
 

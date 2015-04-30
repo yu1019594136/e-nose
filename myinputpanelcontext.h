@@ -67,7 +67,8 @@ public:
     void reset();
 
 private slots:
-    void sendCharacter(QChar character);
+    //void sendCharacter(QChar character);
+    void sendCharacter(QString character);
 
 private:
     void updatePosition();
