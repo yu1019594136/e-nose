@@ -75,6 +75,7 @@ private:
 
 private:
     MyInputPanel *inputPanel;
+    int cap_flag;
 };
 
 //! [0]

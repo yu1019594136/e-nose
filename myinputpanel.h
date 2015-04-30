@@ -54,6 +54,7 @@ class MyInputPanel : public QWidget
 
 public:
     MyInputPanel();
+    void set_cap_text(int flag);
 
 signals:
     //void characterGenerated(QChar character);

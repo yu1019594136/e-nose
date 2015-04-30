@@ -61,9 +61,60 @@ MyInputPanel::MyInputPanel()
     signalMapper.setMapping(form.panelButton_7, form.panelButton_7);
     signalMapper.setMapping(form.panelButton_8, form.panelButton_8);
     signalMapper.setMapping(form.panelButton_9, form.panelButton_9);
-    signalMapper.setMapping(form.panelButton_star, form.panelButton_star);
     signalMapper.setMapping(form.panelButton_0, form.panelButton_0);
-    signalMapper.setMapping(form.panelButton_hash, form.panelButton_hash);
+
+    signalMapper.setMapping(form.panelButton_sign0, form.panelButton_sign0);
+    signalMapper.setMapping(form.panelButton_sign1, form.panelButton_sign1);
+    signalMapper.setMapping(form.panelButton_sign2, form.panelButton_sign2);
+    signalMapper.setMapping(form.panelButton_sign3, form.panelButton_sign3);
+    signalMapper.setMapping(form.panelButton_sign4, form.panelButton_sign4);
+    signalMapper.setMapping(form.panelButton_sign5, form.panelButton_sign5);
+    signalMapper.setMapping(form.panelButton_sign6, form.panelButton_sign6);
+    signalMapper.setMapping(form.panelButton_sign7, form.panelButton_sign7);
+    signalMapper.setMapping(form.panelButton_sign8, form.panelButton_sign8);
+    signalMapper.setMapping(form.panelButton_sign9, form.panelButton_sign9);
+    signalMapper.setMapping(form.pushButton_sign10, form.pushButton_sign10);
+    signalMapper.setMapping(form.pushButton_sign11, form.pushButton_sign11);
+    signalMapper.setMapping(form.pushButton_semicolon, form.pushButton_semicolon);
+    signalMapper.setMapping(form.pushButton_slash_left, form.pushButton_slash_left);
+    signalMapper.setMapping(form.pushButton_slash_right, form.pushButton_slash_right);
+    signalMapper.setMapping(form.pushButton_space, form.pushButton_space);
+    signalMapper.setMapping(form.pushButton_question_mark, form.pushButton_question_mark);
+    signalMapper.setMapping(form.pushButton_period, form.pushButton_period);
+    signalMapper.setMapping(form.pushButton_comma, form.pushButton_comma);
+    signalMapper.setMapping(form.pushButton_cap, form.pushButton_cap);
+
+    signalMapper.setMapping(form.pushButton_Backspace, form.pushButton_Backspace);
+    signalMapper.setMapping(form.panelButton_left_arrow, form.panelButton_left_arrow);
+    signalMapper.setMapping(form.panelButton_right_arrow, form.panelButton_right_arrow);
+    signalMapper.setMapping(form.pushButton_enter, form.pushButton_enter);
+
+    signalMapper.setMapping(form.pushButton_a, form.pushButton_a);
+    signalMapper.setMapping(form.pushButton_b, form.pushButton_b);
+    signalMapper.setMapping(form.pushButton_c, form.pushButton_c);
+    signalMapper.setMapping(form.pushButton_d, form.pushButton_d);
+    signalMapper.setMapping(form.pushButton_e, form.pushButton_e);
+    signalMapper.setMapping(form.pushButton_f, form.pushButton_f);
+    signalMapper.setMapping(form.pushButton_g, form.pushButton_g);
+    signalMapper.setMapping(form.pushButton_h, form.pushButton_h);
+    signalMapper.setMapping(form.pushButton_i, form.pushButton_i);
+    signalMapper.setMapping(form.pushButton_j, form.pushButton_j);
+    signalMapper.setMapping(form.pushButton_k, form.pushButton_k);
+    signalMapper.setMapping(form.pushButton_l, form.pushButton_l);
+    signalMapper.setMapping(form.pushButton_m, form.pushButton_m);
+    signalMapper.setMapping(form.pushButton_n, form.pushButton_n);
+    signalMapper.setMapping(form.pushButton_o, form.pushButton_o);
+    signalMapper.setMapping(form.pushButton_p, form.pushButton_p);
+    signalMapper.setMapping(form.pushButton_q, form.pushButton_q);
+    signalMapper.setMapping(form.pushButton_r, form.pushButton_r);
+    signalMapper.setMapping(form.pushButton_s, form.pushButton_s);
+    signalMapper.setMapping(form.pushButton_t, form.pushButton_t);
+    signalMapper.setMapping(form.pushButton_u, form.pushButton_u);
+    signalMapper.setMapping(form.pushButton_v, form.pushButton_v);
+    signalMapper.setMapping(form.pushButton_w, form.pushButton_w);
+    signalMapper.setMapping(form.pushButton_x, form.pushButton_x);
+    signalMapper.setMapping(form.pushButton_y, form.pushButton_y);
+    signalMapper.setMapping(form.pushButton_z, form.pushButton_z);
 
     connect(form.panelButton_1, SIGNAL(clicked()),
             &signalMapper, SLOT(map()));
@@ -83,11 +134,111 @@ MyInputPanel::MyInputPanel()
             &signalMapper, SLOT(map()));
     connect(form.panelButton_9, SIGNAL(clicked()),
             &signalMapper, SLOT(map()));
-    connect(form.panelButton_star, SIGNAL(clicked()),
-            &signalMapper, SLOT(map()));
     connect(form.panelButton_0, SIGNAL(clicked()),
             &signalMapper, SLOT(map()));
-    connect(form.panelButton_hash, SIGNAL(clicked()),
+
+    connect(form.panelButton_sign0, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign1, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign2, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign3, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign4, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign5, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign6, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign7, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign8, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_sign9, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_sign10, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_sign11, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+
+    connect(form.pushButton_Backspace, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_enter, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_left_arrow, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.panelButton_right_arrow, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_space, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_slash_right, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_slash_left, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_semicolon, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_question_mark, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_period, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_comma, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_cap, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+
+
+    connect(form.pushButton_a, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_b, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_c, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_d, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_e, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_f, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_g, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_h, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_i, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_j, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_k, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_l, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_m, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_n, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_o, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_p, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_q, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_r, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_s, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_t, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_u, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_v, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_w, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_x, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_y, SIGNAL(clicked()),
+            &signalMapper, SLOT(map()));
+    connect(form.pushButton_z, SIGNAL(clicked()),
             &signalMapper, SLOT(map()));
 
     connect(&signalMapper, SIGNAL(mapped(QWidget*)),
@@ -133,3 +284,11 @@ void MyInputPanel::buttonClicked(QWidget *w)
 }
 
 //! [3]
+
+void MyInputPanel::set_cap_text(int flag)
+{
+    if(flag == -1)
+        form.pushButton_cap->setText("CAP");
+    else
+        form.pushButton_cap->setText("cap");
+}
