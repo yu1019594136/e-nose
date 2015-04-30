@@ -76,6 +76,10 @@ private:
 private:
     MyInputPanel *inputPanel;
     int cap_flag;
+    int deskWidth;                  //桌面宽度
+    int deskHeight;                 //桌面高度
+    int inputpanelWidth;                   //窗体宽度
+    int inputpanelHeight;                  //窗体高度
 };
 
 //! [0]

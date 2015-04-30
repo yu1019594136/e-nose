@@ -52,6 +52,13 @@ MyInputPanelContext::MyInputPanelContext()
 
     /* cap键按下标记 1表示小写，-1表示大写*/
     cap_flag = 1;
+
+    /* 更新位置辅助变量 */
+    QDesktopWidget w;
+    deskWidth = w.availableGeometry().width();
+    deskHeight = w.availableGeometry().height();
+    inputpanelWidth = inputPanel->width();
+    inputpanelHeight = inputPanel->height();
 }
 
 //! [0]
@@ -212,10 +219,24 @@ void MyInputPanelContext::updatePosition()
     if (!widget)
         return;
 
-    QRect widgetRect = widget->rect();
-    QPoint panelPos = QPoint(widgetRect.left(), widgetRect.bottom() + 2);
-    panelPos = widget->mapToGlobal(panelPos);
+    QPoint panelPos;//存放最终软键盘摆放的位置
+
+    /*如果获得焦点的部件的左上角坐标在屏幕的上半部分，那么软键盘居中下半屏显示
+     *如果获得焦点的部件的左上角坐标在屏幕的下半部分，那么软键盘居中上半屏显示
+     *
+     * 先计算出获得焦点部件的坐标（左上角坐标widget->pos()），在将其换算成全屏幕的坐标(mapToGlobal)，再取其纵坐标值y()
+     */
+    if(widget->mapToGlobal(widget->pos()).y() < deskHeight / 2)
+        panelPos= QPoint(deskWidth / 2 - inputpanelWidth / 2, deskHeight - inputpanelHeight);//横向居中，软键盘底部贴屏幕底部
+    else
+        panelPos= QPoint(deskWidth / 2 - inputpanelWidth / 2, 10);//横向居中，软键盘顶部贴屏幕顶部
+
     inputPanel->move(panelPos);
+
+//    QRect widgetRect = widget->rect();
+//    QPoint panelPos = QPoint(widgetRect.left(), widgetRect.bottom() + 2);
+//    panelPos = widget->mapToGlobal(panelPos);
+//    inputPanel->move(panelPos);
 }
 
 //! [3]
