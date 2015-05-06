@@ -114,7 +114,7 @@ void DataProcessThread::recei_fro_logic_sample(SAMPLE sample_para)
 
     sample.sample_freq = sample_para.sample_freq;
     sample.sample_time = sample_para.sample_time;
-    sample.filename_prefix = sample_para.filename_prefix + datetime.toString("yyyy.MM.dd-hh_mm_ss") + ".txt";
+    sample.filename_prefix = QString("/root/qt_program/") + sample_para.filename_prefix + datetime.toString("_yyyy.MM.dd-hh_mm_ss") + ".txt";
 
     QByteArray ba = sample.filename_prefix.toLatin1();
     filename = ba.data();

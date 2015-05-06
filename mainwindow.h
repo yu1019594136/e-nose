@@ -24,7 +24,7 @@ public:
 protected:
 
 signals:
-    void send_to_logic_ststem_para_set(SYSTEM_PARA_SET system_para_set_info);
+    void send_to_logic_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
@@ -52,8 +52,10 @@ public slots:
     void recei_fro_hard_magnetic_update(MAGNETIC magnetic_info);
 
     /* 接收来自逻辑线程的系统状态信息 */
-    void recei_fro_logic_systemstate(SYSTEM_STATE system_state_para);
+    void recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_state_para);
 
+    /* set按钮使能计时开始 */
+    void recei_fro_logic_set_enable(int enable_time);
 
 private:
     Ui::MainWindow *ui;
@@ -64,6 +66,7 @@ private:
     Plot_Widget *plot_widget;
     SYSTEM_STATE system_state;  //系统控制参数
     SYSTEM_PARA_SET system_para_set;
+    QTimer *pushButton_enable_timer;
 };
 
 #endif // MAINWINDOW_H

@@ -29,6 +29,7 @@ typedef struct{
 typedef struct{
     float preset_temp;//预设温度
     int hold_time;//蒸发时间
+    int pump_up_time;//打气时间
     float sample_freq;//每个通道的采样频率
     int sample_time;//每个通道的时间长度
     int evapor_clear_time;//蒸发室清洗时间
@@ -55,5 +56,24 @@ enum FLAG_STATUS{
     UN_SET = 0,
     AL_SET
 };
+
+typedef struct{
+    bool pushButton_standby;
+    bool pushButton_preheat;
+    bool pushButton_thermo;
+    bool pushButton_evaporation;
+    bool pushButton_sampling;
+    bool pushButton_clear;
+
+    bool pushButton_set;
+    bool pushButton_al_set;
+    bool pushButton_open;
+    bool pushButton_close;
+    bool pushButton_clear2;
+    bool pushButton_pause;
+    bool pushButton_plot;
+    bool pushButton_done;
+} PUSHBUTTON_STATE;
+
 
 #endif // QCOMMON_H

@@ -31,6 +31,9 @@ private:
     SYSTEM_PARA_SET system_para_set;//系统控制参数
 
     OPERATION_FLAG operation_flag;
+    PUSHBUTTON_STATE pushButton_state;
+
+    bool read_para_flag;
 
 signals:
     /* 发送给硬件控制线程的恒温信号 */
@@ -49,7 +52,10 @@ signals:
     void send_to_dataproc_sample(SAMPLE sample_para);
 
     /* 发送系统状态到GUI线程 */
-    void send_to_GUI_systemstate(SYSTEM_STATE system_state_para);
+    void send_to_GUI_pushButton_state(PUSHBUTTON_STATE pushButton_state_para);
+
+    /* set按钮使能计时开始 */
+    void send_to_GUI_set_enable(int enable_time);
 
 public slots:
     /* 处理来自硬件线程预热完成的信号 */

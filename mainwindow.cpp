@@ -17,7 +17,7 @@ Q_DECLARE_METATYPE(MAGNETIC)
 Q_DECLARE_METATYPE(SAMPLE)
 Q_DECLARE_METATYPE(PLOT_INFO)
 Q_DECLARE_METATYPE(SYSTEM_PARA_SET)
-Q_DECLARE_METATYPE(SYSTEM_STATE)
+Q_DECLARE_METATYPE(PUSHBUTTON_STATE)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -64,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <SAMPLE>("SAMPLE");
     qRegisterMetaType <PLOT_INFO>("PLOT_INFO");
     qRegisterMetaType <SYSTEM_PARA_SET>("SYSTEM_PARA_SET");
-    qRegisterMetaType <SYSTEM_STATE>("SYSTEM_STATE");
+    qRegisterMetaType <PUSHBUTTON_STATE>("PUSHBUTTON_STATE");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -82,7 +82,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 恒温操作时GUI实时更新thermostat_duty */
     connect(hardware_thread, SIGNAL(send_to_GUI_thermostat_duty_update(int)), this, SLOT(recei_fro_hard_thermostat_duty_update(int)), Qt::QueuedConnection);
     /* GUI实时更新按钮状态 */
-    connect(logic_thread, SIGNAL(send_to_GUI_systemstate(SYSTEM_STATE)), this, SLOT(recei_fro_logic_systemstate(SYSTEM_STATE)),Qt::QueuedConnection);
+    connect(logic_thread, SIGNAL(send_to_GUI_pushButton_state(PUSHBUTTON_STATE)), this, SLOT(recei_fro_logic_pushButton_state(PUSHBUTTON_STATE)),Qt::QueuedConnection);
 
     /* 逻辑线程发送蜂鸣器控制信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_beep(BEEP)), hardware_thread, SLOT(recei_fro_logic_beep(BEEP)), Qt::QueuedConnection);
@@ -101,8 +101,15 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* plot_widget对象接收来自数据处理线程的采样数据绘图命令 */
     connect(dataprocess_thread, SIGNAL(send_to_PlotWidget_plotdata(PLOT_INFO)), plot_widget, SLOT(recei_fro_datapro_dataplot(PLOT_INFO)), Qt::QueuedConnection);
 
+    /* 通知GUI线程set按钮开始计时 */
+    connect(logic_thread, SIGNAL(send_to_GUI_set_enable(int)), this, SLOT(recei_fro_logic_set_enable(int)), Qt::QueuedConnection);
+
     /* 参数面板中的参数并发送给逻辑线程 */
-    connect(this, SIGNAL(send_to_logic_ststem_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
+    connect(this, SIGNAL(send_to_logic_system_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
+
+    /* 实例化一个定时器  */
+    pushButton_enable_timer = new QTimer(this);
+    connect(pushButton_enable_timer, SIGNAL(timeout()), this, SLOT(on_pushButton_al_set_clicked()));
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -259,129 +266,48 @@ void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
 }
 
 /* 接收来自逻辑线程的系统状态信息 */
-void MainWindow::recei_fro_logic_systemstate(SYSTEM_STATE system_state_para)
+void MainWindow::recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_state_para)
 {
-    if(system_state_para == STANDBY)
-    {
-        ui->pushButton_standby->setEnabled(false);
-        ui->pushButton_preheat->setEnabled(true);
-        ui->pushButton_thermo->setEnabled(false);
-        ui->pushButton_evaporation->setEnabled(false);
-        ui->pushButton_sample->setEnabled(false);
-        ui->pushButton_clear->setEnabled(false);
+    ui->pushButton_standby->setEnabled(pushButton_state_para.pushButton_standby);
+    ui->pushButton_preheat->setEnabled(pushButton_state_para.pushButton_preheat);
+    ui->pushButton_thermo->setEnabled(pushButton_state_para.pushButton_thermo);
+    ui->pushButton_evaporation->setEnabled(pushButton_state_para.pushButton_evaporation);
+    ui->pushButton_sample->setEnabled(pushButton_state_para.pushButton_sampling);
+    ui->pushButton_clear->setEnabled(pushButton_state_para.pushButton_clear);
 
-        ui->pushButton_set->setEnabled(false);
-        ui->pushButton_al_set->setEnabled(false);
-        ui->pushButton_open->setEnabled(false);
-        ui->pushButton_close->setEnabled(false);
-        ui->pushButton_clear_2->setEnabled(false);
-        ui->pushButton_pause->setEnabled(false);
-        ui->pushButton_plot->setEnabled(false);
-        ui->pushButton_done->setEnabled(false);
+    ui->pushButton_set->setEnabled(pushButton_state_para.pushButton_set);
+    ui->pushButton_al_set->setEnabled(pushButton_state_para.pushButton_al_set);
+    ui->pushButton_open->setEnabled(pushButton_state_para.pushButton_open);
+    ui->pushButton_close->setEnabled(pushButton_state_para.pushButton_close);
+    ui->pushButton_clear_2->setEnabled(pushButton_state_para.pushButton_clear2);
+    ui->pushButton_pause->setEnabled(pushButton_state_para.pushButton_pause);
+    ui->pushButton_plot->setEnabled(pushButton_state_para.pushButton_plot);
+    ui->pushButton_done->setEnabled(pushButton_state_para.pushButton_done);
+}
 
-    }
-    else if(system_state_para == PREHEAT)
-    {
-        ui->pushButton_standby->setEnabled(true);
-        ui->pushButton_preheat->setEnabled(false);
-        ui->pushButton_thermo->setEnabled(false);
-        ui->pushButton_evaporation->setEnabled(false);
-        ui->pushButton_sample->setEnabled(false);
-        ui->pushButton_clear->setEnabled(false);
-
-        ui->pushButton_set->setEnabled(false);
-        ui->pushButton_al_set->setEnabled(false);
-        ui->pushButton_open->setEnabled(false);
-        ui->pushButton_close->setEnabled(false);
-        ui->pushButton_clear_2->setEnabled(false);
-        ui->pushButton_pause->setEnabled(false);
-        ui->pushButton_plot->setEnabled(false);
-        ui->pushButton_done->setEnabled(false);
-    }
-    else if(system_state_para == THERMO)
-    {
-        ui->pushButton_standby->setEnabled(true);
-        ui->pushButton_preheat->setEnabled(true);
-        ui->pushButton_thermo->setEnabled(false);
-        ui->pushButton_evaporation->setEnabled(false);
-        ui->pushButton_sample->setEnabled(false);
-        ui->pushButton_clear->setEnabled(false);
-
-        ui->pushButton_set->setEnabled(false);
-        ui->pushButton_al_set->setEnabled(false);
-        ui->pushButton_open->setEnabled(false);
-        ui->pushButton_close->setEnabled(false);
-        ui->pushButton_clear_2->setEnabled(false);
-        ui->pushButton_pause->setEnabled(false);
-        ui->pushButton_plot->setEnabled(false);
-        ui->pushButton_done->setEnabled(false);
-    }
-    else if(system_state_para == EVAPORATION)
-    {
-//        ui->pushButton_standby->setEnabled();
-//        ui->pushButton_preheat->setEnabled();
-//        ui->pushButton_thermo->setEnabled();
-//        ui->pushButton_evaporation->setEnabled(false);
-//        ui->pushButton_sample->setEnabled(false);
-//        ui->pushButton_clear->setEnabled(false);
-
-//        ui->pushButton_set->setEnabled();
-//        ui->pushButton_al_set->setEnabled();
-//        ui->pushButton_open->setEnabled();
-//        ui->pushButton_close->setEnabled();
-//        ui->pushButton_clear_2->setEnabled();
-//        ui->pushButton_pause->setEnabled();
-//        ui->pushButton_plot->setEnabled();
-//        ui->pushButton_done->setEnabled();
-    }
-    else if(system_state_para == SAMPLING)
-    {
-//        ui->pushButton_standby->setEnabled();
-//        ui->pushButton_preheat->setEnabled();
-//        ui->pushButton_thermo->setEnabled();
-//        ui->pushButton_evaporation->setEnabled();
-//        ui->pushButton_sample->setEnabled();
-//        ui->pushButton_clear->setEnabled();
-
-//        ui->pushButton_set->setEnabled();
-//        ui->pushButton_al_set->setEnabled();
-//        ui->pushButton_open->setEnabled();
-//        ui->pushButton_close->setEnabled();
-//        ui->pushButton_clear_2->setEnabled();
-//        ui->pushButton_pause->setEnabled();
-//        ui->pushButton_plot->setEnabled();
-//        ui->pushButton_done->setEnabled();
-    }
-    else if(system_state_para == CLEAR)
-    {
-//        ui->pushButton_standby->setEnabled();
-//        ui->pushButton_preheat->setEnabled();
-//        ui->pushButton_thermo->setEnabled();
-//        ui->pushButton_evaporation->setEnabled();
-//        ui->pushButton_sample->setEnabled();
-//        ui->pushButton_clear->setEnabled();
-
-//        ui->pushButton_set->setEnabled();
-//        ui->pushButton_al_set->setEnabled();
-//        ui->pushButton_open->setEnabled();
-//        ui->pushButton_close->setEnabled();
-//        ui->pushButton_clear_2->setEnabled();
-//        ui->pushButton_pause->setEnabled();
-//        ui->pushButton_plot->setEnabled();
-//        ui->pushButton_done->setEnabled();
-    }
-    else
-    {
-
-    }
-
+/* set按钮使能计时开始 */
+void MainWindow::recei_fro_logic_set_enable(int enable_time)
+{
+    pushButton_enable_timer->start(enable_time * 1000);
+    qDebug() << "timer start" << endl;
 }
 
 /* 按下al-set按键后读取参数面板中的参数并发送给逻辑线程 */
 void MainWindow::on_pushButton_al_set_clicked()
 {
+    qDebug() << "al_set_clicked()" << endl;
+
+    /* 如果定时器还在计时就关掉 */
+    if(pushButton_enable_timer->isActive())
+        pushButton_enable_timer->stop();
+
+    /* 禁能al_set按钮 */
+    ui->pushButton_set->setEnabled(false);
+    ui->pushButton_al_set->setEnabled(false);
+
     system_para_set.preset_temp = ui->set_evapor_temp->value();
     system_para_set.hold_time = ui->set_evapor_time->value();
+    system_para_set.pump_up_time = ui->set_pump_up_time->value();
     system_para_set.sample_freq = ui->set_sample_rate->value();
     system_para_set.sample_time = ui->set_sample_time->value();
 
@@ -394,13 +320,22 @@ void MainWindow::on_pushButton_al_set_clicked()
     system_para_set.reac_clear_time = ui->set_reac_clear->value();
     system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
 
-    emit send_to_logic_ststem_para_set(system_para_set);
+    emit send_to_logic_system_para_set(system_para_set);
 }
 
 void MainWindow::on_pushButton_set_clicked()
 {
+    qDebug() << "set_clicked()" << endl;
+
+    /* set按钮使能计时停止 */
+    pushButton_enable_timer->stop();
+
     /* 点击设置按钮后跳至参数设定选项卡 */
     ui->Qtabwidget->setCurrentIndex(2);
+
+    /* 使能al_set按钮, 禁能set按钮 */
+    ui->pushButton_al_set->setEnabled(true);
+    ui->pushButton_set->setEnabled(false);
 }
 
 void MainWindow::on_pushButton_clear_current_clicked()
