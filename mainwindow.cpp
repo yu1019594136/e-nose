@@ -17,6 +17,7 @@ Q_DECLARE_METATYPE(MAGNETIC)
 Q_DECLARE_METATYPE(SAMPLE)
 Q_DECLARE_METATYPE(PLOT_INFO)
 Q_DECLARE_METATYPE(SYSTEM_PARA_SET)
+Q_DECLARE_METATYPE(SYSTEM_STATE)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -63,6 +64,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <SAMPLE>("SAMPLE");
     qRegisterMetaType <PLOT_INFO>("PLOT_INFO");
     qRegisterMetaType <SYSTEM_PARA_SET>("SYSTEM_PARA_SET");
+    qRegisterMetaType <SYSTEM_STATE>("SYSTEM_STATE");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -74,9 +76,13 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 逻辑线程发送蒸发室恒温信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_evapor_thermostat(THERMOSTAT)), hardware_thread, SLOT(recei_fro_logic_thermostat(THERMOSTAT)), Qt::QueuedConnection);
+    connect(hardware_thread, SIGNAL(send_to_logic_preheat_done()), logic_thread, SLOT(recei_fro_hardware_preheat_done()), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_logic_thermostat_done()), logic_thread, SLOT(recei_fro_hardware_thermostat_done()), Qt::QueuedConnection);
+    connect(hardware_thread, SIGNAL(send_to_logic_evaporation_done()), logic_thread, SLOT(recei_fro_hardware_evapoartion_done()), Qt::QueuedConnection);
     /* 恒温操作时GUI实时更新thermostat_duty */
     connect(hardware_thread, SIGNAL(send_to_GUI_thermostat_duty_update(int)), this, SLOT(recei_fro_hard_thermostat_duty_update(int)), Qt::QueuedConnection);
+    /* GUI实时更新按钮状态 */
+    connect(logic_thread, SIGNAL(send_to_GUI_systemstate(SYSTEM_STATE)), this, SLOT(recei_fro_logic_systemstate(SYSTEM_STATE)),Qt::QueuedConnection);
 
     /* 逻辑线程发送蜂鸣器控制信号给硬件线程 */
     connect(logic_thread, SIGNAL(send_to_hard_beep(BEEP)), hardware_thread, SLOT(recei_fro_logic_beep(BEEP)), Qt::QueuedConnection);
@@ -252,8 +258,127 @@ void MainWindow::recei_fro_hard_magnetic_update(MAGNETIC magnetic_info)
         ui->OFF4->setText("OFF");
 }
 
+/* 接收来自逻辑线程的系统状态信息 */
+void MainWindow::recei_fro_logic_systemstate(SYSTEM_STATE system_state_para)
+{
+    if(system_state_para == STANDBY)
+    {
+        ui->pushButton_standby->setEnabled(false);
+        ui->pushButton_preheat->setEnabled(true);
+        ui->pushButton_thermo->setEnabled(false);
+        ui->pushButton_evaporation->setEnabled(false);
+        ui->pushButton_sample->setEnabled(false);
+        ui->pushButton_clear->setEnabled(false);
+
+        ui->pushButton_set->setEnabled(false);
+        ui->pushButton_al_set->setEnabled(false);
+        ui->pushButton_open->setEnabled(false);
+        ui->pushButton_close->setEnabled(false);
+        ui->pushButton_clear_2->setEnabled(false);
+        ui->pushButton_pause->setEnabled(false);
+        ui->pushButton_plot->setEnabled(false);
+        ui->pushButton_done->setEnabled(false);
+
+    }
+    else if(system_state_para == PREHEAT)
+    {
+        ui->pushButton_standby->setEnabled(true);
+        ui->pushButton_preheat->setEnabled(false);
+        ui->pushButton_thermo->setEnabled(false);
+        ui->pushButton_evaporation->setEnabled(false);
+        ui->pushButton_sample->setEnabled(false);
+        ui->pushButton_clear->setEnabled(false);
+
+        ui->pushButton_set->setEnabled(false);
+        ui->pushButton_al_set->setEnabled(false);
+        ui->pushButton_open->setEnabled(false);
+        ui->pushButton_close->setEnabled(false);
+        ui->pushButton_clear_2->setEnabled(false);
+        ui->pushButton_pause->setEnabled(false);
+        ui->pushButton_plot->setEnabled(false);
+        ui->pushButton_done->setEnabled(false);
+    }
+    else if(system_state_para == THERMO)
+    {
+        ui->pushButton_standby->setEnabled(true);
+        ui->pushButton_preheat->setEnabled(true);
+        ui->pushButton_thermo->setEnabled(false);
+        ui->pushButton_evaporation->setEnabled(false);
+        ui->pushButton_sample->setEnabled(false);
+        ui->pushButton_clear->setEnabled(false);
+
+        ui->pushButton_set->setEnabled(false);
+        ui->pushButton_al_set->setEnabled(false);
+        ui->pushButton_open->setEnabled(false);
+        ui->pushButton_close->setEnabled(false);
+        ui->pushButton_clear_2->setEnabled(false);
+        ui->pushButton_pause->setEnabled(false);
+        ui->pushButton_plot->setEnabled(false);
+        ui->pushButton_done->setEnabled(false);
+    }
+    else if(system_state_para == EVAPORATION)
+    {
+//        ui->pushButton_standby->setEnabled();
+//        ui->pushButton_preheat->setEnabled();
+//        ui->pushButton_thermo->setEnabled();
+//        ui->pushButton_evaporation->setEnabled(false);
+//        ui->pushButton_sample->setEnabled(false);
+//        ui->pushButton_clear->setEnabled(false);
+
+//        ui->pushButton_set->setEnabled();
+//        ui->pushButton_al_set->setEnabled();
+//        ui->pushButton_open->setEnabled();
+//        ui->pushButton_close->setEnabled();
+//        ui->pushButton_clear_2->setEnabled();
+//        ui->pushButton_pause->setEnabled();
+//        ui->pushButton_plot->setEnabled();
+//        ui->pushButton_done->setEnabled();
+    }
+    else if(system_state_para == SAMPLING)
+    {
+//        ui->pushButton_standby->setEnabled();
+//        ui->pushButton_preheat->setEnabled();
+//        ui->pushButton_thermo->setEnabled();
+//        ui->pushButton_evaporation->setEnabled();
+//        ui->pushButton_sample->setEnabled();
+//        ui->pushButton_clear->setEnabled();
+
+//        ui->pushButton_set->setEnabled();
+//        ui->pushButton_al_set->setEnabled();
+//        ui->pushButton_open->setEnabled();
+//        ui->pushButton_close->setEnabled();
+//        ui->pushButton_clear_2->setEnabled();
+//        ui->pushButton_pause->setEnabled();
+//        ui->pushButton_plot->setEnabled();
+//        ui->pushButton_done->setEnabled();
+    }
+    else if(system_state_para == CLEAR)
+    {
+//        ui->pushButton_standby->setEnabled();
+//        ui->pushButton_preheat->setEnabled();
+//        ui->pushButton_thermo->setEnabled();
+//        ui->pushButton_evaporation->setEnabled();
+//        ui->pushButton_sample->setEnabled();
+//        ui->pushButton_clear->setEnabled();
+
+//        ui->pushButton_set->setEnabled();
+//        ui->pushButton_al_set->setEnabled();
+//        ui->pushButton_open->setEnabled();
+//        ui->pushButton_close->setEnabled();
+//        ui->pushButton_clear_2->setEnabled();
+//        ui->pushButton_pause->setEnabled();
+//        ui->pushButton_plot->setEnabled();
+//        ui->pushButton_done->setEnabled();
+    }
+    else
+    {
+
+    }
+
+}
+
 /* 按下al-set按键后读取参数面板中的参数并发送给逻辑线程 */
-void MainWindow::on_pushButton_10_clicked()
+void MainWindow::on_pushButton_al_set_clicked()
 {
     system_para_set.preset_temp = ui->set_evapor_temp->value();
     system_para_set.hold_time = ui->set_evapor_time->value();
@@ -270,9 +395,12 @@ void MainWindow::on_pushButton_10_clicked()
     system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
 
     emit send_to_logic_ststem_para_set(system_para_set);
+}
 
-    /*  */
-    //ui->Qtabwidget->setCurrentIndex(3);
+void MainWindow::on_pushButton_set_clicked()
+{
+    /* 点击设置按钮后跳至参数设定选项卡 */
+    ui->Qtabwidget->setCurrentIndex(2);
 }
 
 void MainWindow::on_pushButton_clear_current_clicked()
@@ -298,10 +426,4 @@ void MainWindow::on_pushButton_clear_all_clicked()
     ui->comboBox_data_filepath->insertSeparator(0);
     ui->comboBox_data_filepath->clearEditText();
     qDebug() << "count = " << ui->comboBox_data_filepath->count() << endl;
-}
-
-void MainWindow::on_pushButton_9_clicked()
-{
-    /* 点击设置按钮后跳至参数设定选项卡 */
-    ui->Qtabwidget->setCurrentIndex(2);
 }

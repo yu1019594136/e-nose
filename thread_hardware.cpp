@@ -30,6 +30,10 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     pump_timer = new QTimer();
     connect(pump_timer, SIGNAL(timeout()), this, SLOT(pump_timeout()));
 
+    /* 实例化一个定时器用于蒸发时间控制 */
+    evaporation_timer = new QTimer();
+    connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evaporation_timeout()));
+
     stopped = false;
 }
 
@@ -70,7 +74,17 @@ void HardWareControlThread::run()
             if(duty == 0 && flag_inform_duty_0 == 0)
             {
                 flag_inform_duty_0 = 1;
-                emit send_to_logic_thermostat_done();
+
+                /* 预热完成还是恒温完成 */
+                if(abs(thermostat.preset_temp - 35.0) < 0.01)
+                    emit send_to_logic_preheat_done();
+                else
+                {
+                    emit send_to_logic_thermostat_done();
+
+                    /* 启动定时器，开始对蒸发计时 */
+                    evaporation_timer->start(thermostat.hold_time);
+                }
             }
 
             if(duty != last_duty)
@@ -83,6 +97,11 @@ void HardWareControlThread::run()
         }
         msleep(200);
     }
+
+    /*  */
+//    delete beep_timer;
+//    delete pump_timer;
+//    delete evaporation_timer;
 
     /* 操作结束前，
      * 关闭各个功能硬件电路，恢复系统配置；
@@ -235,4 +254,13 @@ void HardWareControlThread::pump_timeout()
 
     /* 更新气泵硬件信息到GUI线程 */
     emit send_to_GUI_pump_duty_update(0);
+}
+
+void HardWareControlThread::evaporation_timeout()
+{
+    evaporation_timer->stop();
+
+    /* 蒸发完成，通知逻辑线程  */
+    emit send_to_logic_evaporation_done();
+
 }

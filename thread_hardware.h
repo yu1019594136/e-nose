@@ -32,6 +32,7 @@ private:
 
     QTimer *beep_timer;//鸣叫鸣叫定时控制
     QTimer *pump_timer;//气泵开启时间
+    QTimer *evaporation_timer;//定时蒸发时间
 
 signals:
     /* 将实时采集的温湿度信号发送给GUI线程 */
@@ -46,8 +47,14 @@ signals:
     /* 使用电磁阀时将电磁阀状态信息发送给GUI线程 */
     void send_to_GUI_magnetic_update(MAGNETIC magnetic_info);
 
+    /* 预热完成，通知逻辑线程 */
+    void send_to_logic_preheat_done();
+
     /* 恒温完成，通知逻辑线程 */
     void send_to_logic_thermostat_done();
+
+    /* 蒸发完成，通知逻辑线程 */
+    void send_to_logic_evaporation_done();
 
 public slots:
     /* 处理来自逻辑线程的恒温信号 */
@@ -68,6 +75,9 @@ private slots:
 
     /* 气泵定时溢出 */
     void pump_timeout();
+
+    /* 蒸发时间溢出 */
+    void evaporation_timeout();
 
 };
 

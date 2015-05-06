@@ -9,7 +9,8 @@ enum SYSTEM_STATE{
     THERMO,         //恒温
     EVAPORATION,    //蒸发
     SAMPLING,       //采样
-    CLEAR           //清洗
+    CLEAR,          //清洗
+    QUIT            //退出
 };
 
 typedef struct{
@@ -39,6 +40,20 @@ typedef struct{
 enum SAMPLE_STYLE{
     SINGLE = 0,
     CONTINUE
+};
+
+typedef struct{
+    int standby_flag;
+    int preheat_flag;
+    int thermo_flag;
+    int evaporation_flag;
+    int sampling_flag;
+    int clear_flag;
+} OPERATION_FLAG;//各个标签用于保证某些状态中的操作仅仅执行一次
+
+enum FLAG_STATUS{
+    UN_SET = 0,
+    AL_SET
 };
 
 #endif // QCOMMON_H

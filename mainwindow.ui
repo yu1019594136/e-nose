@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>480</width>
-    <height>271</height>
+    <height>272</height>
    </rect>
   </property>
   <property name="cursor">
@@ -17,12 +17,7 @@
    <enum>Qt::StrongFocus</enum>
   </property>
   <property name="styleSheet">
-   <string notr="true">#MainWindow{
-	background-image: url(:/480X272像素3.jpg);
-	color: rgb(208, 237, 217);
-}
-
-</string>
+   <string notr="true"/>
   </property>
   <property name="documentMode">
    <bool>false</bool>
@@ -52,7 +47,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>0</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideMiddle</enum>
@@ -843,7 +838,7 @@
      <attribute name="title">
       <string>sys operation</string>
      </attribute>
-     <widget class="QPushButton" name="pushButton_9">
+     <widget class="QPushButton" name="pushButton_set">
       <property name="geometry">
        <rect>
         <x>160</x>
@@ -856,7 +851,7 @@
        <string>set</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_10">
+     <widget class="QPushButton" name="pushButton_al_set">
       <property name="geometry">
        <rect>
         <x>230</x>
@@ -869,7 +864,7 @@
        <string>al-set</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_11">
+     <widget class="QPushButton" name="pushButton_open">
       <property name="geometry">
        <rect>
         <x>160</x>
@@ -882,7 +877,7 @@
        <string>open</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_12">
+     <widget class="QPushButton" name="pushButton_close">
       <property name="geometry">
        <rect>
         <x>230</x>
@@ -895,7 +890,7 @@
        <string>close</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_13">
+     <widget class="QPushButton" name="pushButton_pause">
       <property name="geometry">
        <rect>
         <x>230</x>
@@ -908,7 +903,7 @@
        <string>pause</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_14">
+     <widget class="QPushButton" name="pushButton_clear_2">
       <property name="geometry">
        <rect>
         <x>160</x>
@@ -921,7 +916,7 @@
        <string>clear</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_15">
+     <widget class="QPushButton" name="pushButton_plot">
       <property name="geometry">
        <rect>
         <x>300</x>
@@ -934,7 +929,7 @@
        <string>plot</string>
       </property>
      </widget>
-     <widget class="QPushButton" name="pushButton_16">
+     <widget class="QPushButton" name="pushButton_done">
       <property name="geometry">
        <rect>
         <x>370</x>
@@ -958,83 +953,48 @@
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
        <item>
-        <widget class="QPushButton" name="pushButton_3">
+        <widget class="QPushButton" name="pushButton_standby">
          <property name="text">
           <string>standby</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_4">
+        <widget class="QPushButton" name="pushButton_preheat">
          <property name="text">
           <string>preheat</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_5">
+        <widget class="QPushButton" name="pushButton_thermo">
          <property name="text">
           <string>thermo</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_6">
+        <widget class="QPushButton" name="pushButton_evaporation">
          <property name="text">
           <string>evaporation</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_7">
+        <widget class="QPushButton" name="pushButton_sample">
          <property name="text">
           <string>sample</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QPushButton" name="pushButton_8">
+        <widget class="QPushButton" name="pushButton_clear">
          <property name="text">
           <string>clear</string>
          </property>
         </widget>
        </item>
       </layout>
-     </widget>
-    </widget>
-    <widget class="QWidget" name="tab_4">
-     <attribute name="title">
-      <string>test</string>
-     </attribute>
-     <widget class="QTextEdit" name="textEdit">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>20</y>
-        <width>421</width>
-        <height>61</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="lineEdit">
-      <property name="geometry">
-       <rect>
-        <x>20</x>
-        <y>90</y>
-        <width>201</width>
-        <height>41</height>
-       </rect>
-      </property>
-     </widget>
-     <widget class="QTextEdit" name="textEdit_2">
-      <property name="geometry">
-       <rect>
-        <x>340</x>
-        <y>170</y>
-        <width>104</width>
-        <height>31</height>
-       </rect>
-      </property>
      </widget>
     </widget>
    </widget>

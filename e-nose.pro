@@ -68,4 +68,4 @@ OTHER_FILES += \
     LCD_Images/480X272像素3.jpg
 
 RESOURCES += \
-    LCD_Images/LCD_backround_images.qrc
+    lcd_backround.qrc

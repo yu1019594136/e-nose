@@ -30,13 +30,13 @@ private slots:
     void on_Quit_Button_clicked();//用于退出程序
     void timerUpdate();//用于更新时间
 
-    void on_pushButton_10_clicked();
-
     void on_pushButton_clear_current_clicked();
 
     void on_pushButton_clear_all_clicked();
 
-    void on_pushButton_9_clicked();
+    void on_pushButton_al_set_clicked();
+
+    void on_pushButton_set_clicked();
 
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
@@ -50,6 +50,9 @@ public slots:
 
     /* 接收来自硬件线程的电磁阀状态信息 */
     void recei_fro_hard_magnetic_update(MAGNETIC magnetic_info);
+
+    /* 接收来自逻辑线程的系统状态信息 */
+    void recei_fro_logic_systemstate(SYSTEM_STATE system_state_para);
 
 
 private:
