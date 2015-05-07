@@ -162,6 +162,9 @@ void DataProcessThread::sample_timeout()
     {
         sample_timer->stop();
 
+        /* 发送采样完成信号给逻辑线程 */
+        emit send_to_logic_sample_done();
+
         qDebug("sample_count_real = %ld\n", plot_info.sample_count_real);
 
         /* 将内存空间的数据保存到文件 */

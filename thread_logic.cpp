@@ -9,6 +9,10 @@ LogicControlThread::LogicControlThread(QObject *parent) :
     stopped = false;
     read_para_flag = false;
 
+    /* 实例化一个定时器，用于打入样本气体到反应室时可以定时封闭反应室 */
+    reac_close_timer = new QTimer();
+    connect(reac_close_timer, SIGNAL(timeout()), this, SLOT(close_reac_room()));
+
     system_state = PREHEAT;
 
     operation_flag.standby_flag = AL_SET;
@@ -112,8 +116,6 @@ void LogicControlThread::run()
             if(operation_flag.thermo_flag == UN_SET)
             {
                 pushButton_state.pushButton_preheat = true;
-                pushButton_state.pushButton_set = true;
-
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* set按钮使能计时开始5s */
@@ -144,6 +146,9 @@ void LogicControlThread::run()
             {
                 qDebug() << "evaporation start" << endl;
 
+                pushButton_state.pushButton_thermo = true;
+                emit send_to_GUI_pushButton_state(pushButton_state);
+
                 /* 关闭蒸发室 */
                 //magnetic_para.M1 = HIGH;
                 magnetic_para.M1 = LOW;
@@ -166,6 +171,15 @@ void LogicControlThread::run()
         {
             if(operation_flag.sampling_flag == UN_SET)
             {
+                pushButton_state.pushButton_evaporation = true;
+                emit send_to_GUI_pushButton_state(pushButton_state);
+
+                /* 蒸发室需要清洗，所以停止恒温 */
+                thermostat_para.thermo_switch = STOP;
+                //thermostat_para.preset_temp = system_para_set.preset_temp;
+                //thermostat_para.hold_time = system_para_set.hold_time * 1000;//单位ms, 蒸发时间,硬件线程恒温到预设温度后自动启动定时器开始计时蒸发时间
+                emit send_to_hard_evapor_thermostat(thermostat_para);
+
                 /* 打开采样气路 */
                 magnetic_para.M1 = HIGH;
                 //magnetic_para.M1 = LOW;
@@ -183,9 +197,12 @@ void LogicControlThread::run()
                 pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
                 emit send_to_hard_pump(pump_para);
 
+                /* 打入样本气体到反应室后可以定时封闭反应室 */
+                reac_close_timer->start(pump_para.hold_time);
+
                 /* 同时开始采样 */
-                sample_para.sample_freq = 100;//单位Hz,每个通道的采样频率
-                sample_para.sample_time = 60;//单位s, 每个通道的采样时间长度
+                sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
+                sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = system_para_set.data_file_path;//数据文件路径以及文件名前缀,
                 emit send_to_dataproc_sample(sample_para);
 
@@ -195,6 +212,15 @@ void LogicControlThread::run()
 
         while(system_state == CLEAR)
         {
+            if(operation_flag.clear_flag == UN_SET)
+            {
+                qDebug() << "clear start" << endl;
+
+                pushButton_state.pushButton_sampling = true;
+                emit send_to_GUI_pushButton_state(pushButton_state);
+
+                operation_flag.clear_flag = AL_SET;
+            }
 
         }
     }
@@ -247,10 +273,27 @@ void LogicControlThread::recei_fro_hardware_evapoartion_done()
 
     /* 发送蜂鸣器控制信号给硬件线程 */
     beep_para.beep_count = 3;//鸣叫次数
-    beep_para.beep_interval = 500;//单位ms,鸣叫间隔
+    beep_para.beep_interval = 300;//单位ms,鸣叫间隔
     emit send_to_hard_beep(beep_para);
 
     qDebug() << "evaporation done!" << endl;
+}
+
+/* 接收来自数据处理线程的采样完成信号 */
+void LogicControlThread::recei_fro_hardware_sample_done()
+{
+    /* 切换到下一个状态 */
+    system_state = CLEAR;
+    operation_flag.sampling_flag = AL_SET;
+    operation_flag.clear_flag = UN_SET;
+
+    /* 发送蜂鸣器控制信号给硬件线程 */
+    beep_para.beep_count = 4;//鸣叫次数
+    beep_para.beep_interval = 250;//单位ms,鸣叫间隔
+    emit send_to_hard_beep(beep_para);
+
+    qDebug() << "sample done!" << endl;
+
 }
 
 void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info)
@@ -268,4 +311,21 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
     qDebug() << "system_para_set.evapor_clear_time = " << system_para_set.evapor_clear_time << endl;
     qDebug() << "system_para_set.reac_clear_time = " << system_para_set.reac_clear_time << endl;
     qDebug() << "system_para_set.data_file_path = " << system_para_set.data_file_path << endl;
+}
+/* 封闭反应室 */
+void LogicControlThread::close_reac_room()
+{
+    msleep(1000);
+    /* 封闭反应室 */
+    magnetic_para.M1 = HIGH;
+    //magnetic_para.M1 = LOW;
+    //magnetic_para.M2 = HIGH;
+    magnetic_para.M2 = LOW;
+    magnetic_para.M3 = HIGH;
+    //magnetic_para.M3 = LOW;
+    //magnetic_para.M4 = HIGH;
+    magnetic_para.M4 = LOW;
+
+    emit send_to_hard_magnetic(magnetic_para);
+
 }

@@ -111,6 +111,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     pushButton_enable_timer = new QTimer(this);
     connect(pushButton_enable_timer, SIGNAL(timeout()), this, SLOT(on_pushButton_al_set_clicked()));
 
+    /* 数据处理线程采样完成后发送信号给逻辑线程 */
+    connect(dataprocess_thread, SIGNAL(send_to_logic_sample_done()), logic_thread, SLOT(recei_fro_hardware_sample_done()), Qt::QueuedConnection);
+
     hardware_thread->start();
     dataprocess_thread->start();
     logic_thread->start();
@@ -152,6 +155,15 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 程序启动后跳至选项卡0 */
     ui->Qtabwidget->setCurrentIndex(0);
+
+    ui->pushButton_set->setEnabled(false);
+    ui->pushButton_al_set->setEnabled(false);
+    ui->pushButton_open->setEnabled(false);
+    ui->pushButton_close->setEnabled(false);
+    ui->pushButton_clear_2->setEnabled(false);
+    ui->pushButton_pause->setEnabled(false);
+    ui->pushButton_plot->setEnabled(false);
+    ui->pushButton_done->setEnabled(false);
 }
 
 MainWindow::~MainWindow()
@@ -274,22 +286,14 @@ void MainWindow::recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_st
     ui->pushButton_evaporation->setEnabled(pushButton_state_para.pushButton_evaporation);
     ui->pushButton_sample->setEnabled(pushButton_state_para.pushButton_sampling);
     ui->pushButton_clear->setEnabled(pushButton_state_para.pushButton_clear);
-
-    ui->pushButton_set->setEnabled(pushButton_state_para.pushButton_set);
-    ui->pushButton_al_set->setEnabled(pushButton_state_para.pushButton_al_set);
-    ui->pushButton_open->setEnabled(pushButton_state_para.pushButton_open);
-    ui->pushButton_close->setEnabled(pushButton_state_para.pushButton_close);
-    ui->pushButton_clear_2->setEnabled(pushButton_state_para.pushButton_clear2);
-    ui->pushButton_pause->setEnabled(pushButton_state_para.pushButton_pause);
-    ui->pushButton_plot->setEnabled(pushButton_state_para.pushButton_plot);
-    ui->pushButton_done->setEnabled(pushButton_state_para.pushButton_done);
 }
 
 /* set按钮使能计时开始 */
 void MainWindow::recei_fro_logic_set_enable(int enable_time)
 {
     pushButton_enable_timer->start(enable_time * 1000);
-    qDebug() << "timer start" << endl;
+    ui->pushButton_set->setEnabled(true);
+    qDebug() << "set pushbutton timer start" << endl;
 }
 
 /* 按下al-set按键后读取参数面板中的参数并发送给逻辑线程 */

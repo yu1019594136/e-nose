@@ -35,6 +35,8 @@ private:
 
     bool read_para_flag;
 
+    QTimer *reac_close_timer;
+
 signals:
     /* 发送给硬件控制线程的恒温信号 */
     void send_to_hard_evapor_thermostat(THERMOSTAT thermostat_para);
@@ -70,7 +72,13 @@ public slots:
     /* 接收GUI线程发送来的系统控制参数 */
     void recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
+    /* 接收来自数据处理线程的采样完成信号 */
+    void recei_fro_hardware_sample_done();
+
 private slots:
+
+    /* 打入样本气体到反应室时可以定时封闭反应室 */
+    void close_reac_room();
 
 };
 

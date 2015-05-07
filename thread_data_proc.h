@@ -33,6 +33,9 @@ private:
 signals:
     void send_to_PlotWidget_plotdata(PLOT_INFO plot_info);
 
+    /* 发送采样完成信号给逻辑线程 */
+    void send_to_logic_sample_done();
+
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */
     void recei_fro_logic_sample(SAMPLE sample_para);
