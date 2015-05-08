@@ -36,6 +36,9 @@ signals:
     /* 发送采样完成信号给逻辑线程 */
     void send_to_logic_sample_done();
 
+    /* 此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能 */
+    void send_to_GUI_enable_plot_pushbutton();
+
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */
     void recei_fro_logic_sample(SAMPLE sample_para);

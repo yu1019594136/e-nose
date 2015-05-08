@@ -54,6 +54,8 @@ private slots:
 
     void on_pushButton_done_clicked();
 
+    void plot_pushbutton_enable();
+
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
     void recei_fro_hard_realtime_info_update(GUI_REALTIME_INFO realtime_info);
@@ -82,6 +84,7 @@ private:
     Plot_Widget *plot_widget;
     SYSTEM_STATE system_state;  //系统控制参数
     SYSTEM_PARA_SET system_para_set;
+
     QTimer *pushButton_enable_timer;
 
     USER_BUTTON_ENABLE user_button_enable;//用户在系统操作面板按下按钮后应该通知逻辑线程产生动作

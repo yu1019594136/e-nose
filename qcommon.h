@@ -25,6 +25,7 @@ typedef struct{
     float sample_freq;//每个通道的采样频率
     int sample_time;//每个通道的时间长度
     QString filename_prefix;
+    bool sample_inform_flag;//采样完成后是否需要硬件线程返回信号通知逻辑线程
 } SAMPLE;
 
 /* 需要实时更新的信息 */

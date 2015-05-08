@@ -44,40 +44,18 @@ void LogicControlThread::run()
     /* 等待其他线程启动完成 */
     msleep(500);
 
-    /* 发送蜂鸣器控制信号给硬件线程 */
-//    beep_para.beep_count = 2;//鸣叫次数
-//    beep_para.beep_interval = 500;//单位ms,鸣叫间隔
-//    emit send_to_hard_beep(beep_para);
-
-    /* 发送电磁阀控制信号给硬件线程 */
-//    magnetic_para.M1 = HIGH;
-//    //magnetic_para.M1 = LOW;
-//    //magnetic_para.M2 = HIGH;
-//    magnetic_para.M2 = LOW;
-//    //magnetic_para.M3 = HIGH;
-//    magnetic_para.M3 = LOW;
-//    //magnetic_para.M4 = HIGH;
-//    magnetic_para.M4 = LOW;
-//    emit send_to_hard_magnetic(magnetic_para);
-
-    /* 打开气泵清洗气路 */
-//    pump_para.pump_switch = HIGH;
-//    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-//    pump_para.hold_time = 5000;//单位ms
-//    emit send_to_hard_pump(pump_para);
-
-//    sample_para.sample_freq = 100;//单位Hz,每个通道的采样频率
-//    sample_para.sample_time = 5;//单位s, 每个通道的采样时间长度
-//    sample_para.filename_prefix = "/root/qt_program/test_data";//数据文件路径以及文件名前缀,
-//    emit send_to_dataproc_sample(sample_para);
-
     while(!stopped)
     {
         while(system_state == STANDBY)
         {
             if(operation_flag.standby_flag == UN_SET)
             {
+                pushButton_state.pushButton_standby = false;
                 pushButton_state.pushButton_preheat = true;
+                pushButton_state.pushButton_thermo = false;
+                pushButton_state.pushButton_evaporation = false;
+                pushButton_state.pushButton_sampling = false;
+                pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 关闭加热带 */
@@ -98,6 +76,10 @@ void LogicControlThread::run()
             {
                 pushButton_state.pushButton_standby = true;
                 pushButton_state.pushButton_preheat = false;
+                pushButton_state.pushButton_thermo = false;
+                pushButton_state.pushButton_evaporation = false;
+                pushButton_state.pushButton_sampling = false;
+                pushButton_state.pushButton_clear = false;
 
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
@@ -223,6 +205,7 @@ void LogicControlThread::run()
                 /* 打入样本气体10秒钟 */
                 pump_para.pump_switch = HIGH;
                 pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
                 emit send_to_hard_pump(pump_para);
 
                 /* 打入样本气体到反应室后定时封闭反应室 */
@@ -233,6 +216,7 @@ void LogicControlThread::run()
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
                 sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = system_para_set.data_file_path;//数据文件路径以及文件名前缀,
+                sample_para.sample_inform_flag = true;
                 emit send_to_dataproc_sample(sample_para);
 
                 /* 蒸发完成，采样开始后可以停止蒸发室的恒温 */
@@ -255,10 +239,25 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_sampling = true;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
-                /* 通知GUI线程使能clear按钮 */
-                user_button_enable.mode = CLEAR_BUTTON;
-                user_button_enable.enable_time = 0;
-                emit send_to_GUI_user_buttton_enable(user_button_enable);
+                /* 打开气泵清洗气路 */
+                magnetic_para.M1 = HIGH;
+                //magnetic_para.M1 = LOW;
+                //magnetic_para.M2 = HIGH;
+                magnetic_para.M2 = LOW;
+                //magnetic_para.M3 = HIGH;
+                magnetic_para.M3 = LOW;
+                magnetic_para.M4 = HIGH;
+                //magnetic_para.M4 = LOW;
+                emit send_to_hard_magnetic(magnetic_para);
+
+                pump_para.pump_switch = HIGH;
+                pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                pump_para.return_action_mode = CLEAR;//
+                emit send_to_hard_pump(pump_para);
+
+                /* 定时蒸发室清洗时间 */
+                close_pump_and_reac_timer->start(system_para_set.evapor_clear_time * 1000);
+                qDebug() << "close_pump_and_reac_timer->start;" << system_para_set.evapor_clear_time << " s." << endl;
 
                 operation_flag.clear_flag = AL_SET;
             }
@@ -339,18 +338,39 @@ void LogicControlThread::close_pump_and_reac()
 
     msleep(1000);
 
-    /* 封闭反应室 */
-    magnetic_para.M1 = HIGH;
-    //magnetic_para.M1 = LOW;
-    //magnetic_para.M2 = HIGH;
-    magnetic_para.M2 = LOW;
-    magnetic_para.M3 = HIGH;
-    //magnetic_para.M3 = LOW;
-    //magnetic_para.M4 = HIGH;
-    magnetic_para.M4 = LOW;
+    if(pump_para.return_action_mode == SAMPLING)//采样阶段打入样本气体后需要封闭反应室
+    {
+        /* 封闭反应室 */
+        magnetic_para.M1 = HIGH;
+        //magnetic_para.M1 = LOW;
+        //magnetic_para.M2 = HIGH;
+        magnetic_para.M2 = LOW;
+        magnetic_para.M3 = HIGH;
+        //magnetic_para.M3 = LOW;
+        //magnetic_para.M4 = HIGH;
+        magnetic_para.M4 = LOW;
 
-    emit send_to_hard_magnetic(magnetic_para);
+        emit send_to_hard_magnetic(magnetic_para);
+    }
+    else if(pump_para.return_action_mode == CLEAR)//清洗阶段气泵清洗完成后，需要密闭蒸发室和反应室
+    {
+        /* 封闭蒸发室和反应室 */
+        //magnetic_para.M1 = HIGH;
+        magnetic_para.M1 = LOW;
+        magnetic_para.M2 = HIGH;
+        //magnetic_para.M2 = LOW;
+        //magnetic_para.M3 = HIGH;
+        magnetic_para.M3 = LOW;
+        //magnetic_para.M4 = HIGH;
+        magnetic_para.M4 = LOW;
 
+        emit send_to_hard_magnetic(magnetic_para);
+
+        /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
+        user_button_enable.mode = CLEAR_BUTTON;
+        user_button_enable.enable_time = 0;
+        emit send_to_GUI_user_buttton_enable(user_button_enable);
+    }
 }
 
 /* 接收来自数据处理线程的采样完成信号 */
@@ -400,19 +420,63 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
     }
     else if(user_button_enable_para.mode == CLEAR_BUTTON)
     {
+        /* 打开清洗气路 */
+        magnetic_para.M1 = HIGH;
+        //magnetic_para.M1 = LOW;
+        //magnetic_para.M2 = HIGH;
+        magnetic_para.M2 = LOW;
+        //magnetic_para.M3 = HIGH;
+        magnetic_para.M3 = LOW;
+        magnetic_para.M4 = HIGH;
+        //magnetic_para.M4 = LOW;
+        emit send_to_hard_magnetic(magnetic_para);
 
+        /* 打开气泵清洗 */
+        pump_para.pump_switch = HIGH;
+        pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+        emit send_to_hard_pump(pump_para);
     }
     else if(user_button_enable_para.mode == PAUSE_BUTTON)
     {
-
+        /* 关闭气泵清洗 */
+        pump_para.pump_switch = LOW;
+        pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+        emit send_to_hard_pump(pump_para);
     }
     else if(user_button_enable_para.mode == PLOT_BUTTON)
     {
+        /* 采样绘图 */
+        sample_para.sample_freq = 60;//单位Hz,每个通道的采样频率
+        sample_para.sample_time = 60;//单位s, 每个通道的采样时间长度
+        sample_para.filename_prefix = "clear_test";//数据文件路径以及文件名前缀,
+        sample_para.sample_inform_flag = false;//不要通知，否则扰乱循环
+        emit send_to_dataproc_sample(sample_para);
 
+        /* 通知GUI线程禁能plot按钮 */
+        user_button_enable.mode = PLOT_BUTTON;
+        user_button_enable.enable_time = 0;//采样绘图时间结束后，数据处理线程将发送信号给GUI线程将plot使能
+        emit send_to_GUI_user_buttton_enable(user_button_enable);
     }
     else if(user_button_enable_para.mode == DONE_BUTTON)
     {
+        /* 点击done按钮后，禁能clear、pause、plot、done四个按钮 */
+        user_button_enable.mode = UNSET;
+        user_button_enable.enable_time = 0;
+        emit send_to_GUI_user_buttton_enable(user_button_enable);
 
+        /* 根据单次采样还是连续采样决定回到待机状态或者预热状态 */
+        if(system_para_set.sample_style == SINGLE)
+        {
+            system_state = STANDBY;
+            operation_flag.standby_flag = UN_SET;
+            operation_flag.clear_flag = AL_SET;
+        }
+        else if(system_para_set.sample_style == CONTINUE)
+        {
+            system_state = PREHEAT;
+            operation_flag.preheat_flag = UN_SET;
+            operation_flag.clear_flag = AL_SET;
+        }
     }
 
 }

@@ -109,15 +109,14 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 参数面板中的参数并发送给逻辑线程 */
     connect(this, SIGNAL(send_to_logic_system_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
 
-    /* 实例化一个定时器  */
-    pushButton_enable_timer = new QTimer(this);
-    connect(pushButton_enable_timer, SIGNAL(timeout()), this, SLOT(on_pushButton_al_set_clicked()));
-
     /* 数据处理线程采样完成后发送信号给逻辑线程 */
     connect(dataprocess_thread, SIGNAL(send_to_logic_sample_done()), logic_thread, SLOT(recei_fro_hardware_sample_done()), Qt::QueuedConnection);
 
     /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
     connect(this, SIGNAL(send_to_logic_user_button_action(USER_BUTTON_ENABLE)), logic_thread, SLOT(recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE)), Qt::QueuedConnection);
+
+    /* 此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能 */
+    connect(dataprocess_thread, SIGNAL(send_to_GUI_enable_plot_pushbutton()), this, SLOT(plot_pushbutton_enable()), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -126,6 +125,10 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 开机显示时间 */
     QDateTime datetime = QDateTime::currentDateTime();
     ui->datetime->setText(datetime.toString("yyyy.MM.dd hh:mm"));
+
+    /* 实例化一个定时器  */
+    pushButton_enable_timer = new QTimer(this);
+    connect(pushButton_enable_timer, SIGNAL(timeout()), this, SLOT(on_pushButton_al_set_clicked()));
 
     /* 实例化一个定时器并启动 */
     timer = new QTimer(this);
@@ -316,6 +319,19 @@ void MainWindow::recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_but
         ui->pushButton_pause->setEnabled(false);
         ui->pushButton_plot->setEnabled(true);
         ui->pushButton_done->setEnabled(true);
+        qDebug() << "clear pause plot done pushbutton enabled" << endl;
+    }
+    else if(user_button_enable_para.mode == PLOT_BUTTON)
+    {
+        ui->pushButton_plot->setEnabled(false);
+        qDebug() << "plot pushbutton disabled" << endl;
+    }
+    else if(user_button_enable_para.mode == UNSET)//点击done按钮后，禁能clear、pause、plot、done四个按钮
+    {
+        ui->pushButton_clear_2->setEnabled(false);
+        ui->pushButton_pause->setEnabled(false);
+        ui->pushButton_plot->setEnabled(false);
+        ui->pushButton_done->setEnabled(false);
     }
 
 }
@@ -351,6 +367,11 @@ void MainWindow::on_pushButton_al_set_clicked()
     emit send_to_logic_system_para_set(system_para_set);
 }
 
+void MainWindow::plot_pushbutton_enable()
+{
+    ui->pushButton_plot->setEnabled(true);
+}
+
 void MainWindow::on_pushButton_set_clicked()
 {
     qDebug() << "set_clicked()" << endl;
@@ -368,6 +389,8 @@ void MainWindow::on_pushButton_set_clicked()
 
 void MainWindow::on_pushButton_open_clicked()
 {
+    qDebug() << "open clicked()" << endl;
+
     ui->pushButton_open->setEnabled(false);
     ui->pushButton_close->setEnabled(true);
     user_button_enable.mode = OPEN_BUTTON;
@@ -376,12 +399,16 @@ void MainWindow::on_pushButton_open_clicked()
 
 void MainWindow::on_pushButton_close_clicked()
 {
+    qDebug() << "close clicked()" << endl;
+
     ui->pushButton_close->setEnabled(false);
     user_button_enable.mode = CLOSE_BUTTON;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 void MainWindow::on_pushButton_clear_2_clicked()
 {
+    qDebug() << "clear clicked()" << endl;
+
     ui->pushButton_clear_2->setEnabled(false);
     ui->pushButton_pause->setEnabled(true);
 
@@ -391,6 +418,8 @@ void MainWindow::on_pushButton_clear_2_clicked()
 
 void MainWindow::on_pushButton_pause_clicked()
 {
+    qDebug() << "pause clicked()" << endl;
+
     ui->pushButton_clear_2->setEnabled(true);
     ui->pushButton_pause->setEnabled(false);
 
@@ -400,12 +429,16 @@ void MainWindow::on_pushButton_pause_clicked()
 
 void MainWindow::on_pushButton_plot_clicked()
 {
+    qDebug() << "pause clicked()" << endl;
+
     user_button_enable.mode = PLOT_BUTTON;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 
 void MainWindow::on_pushButton_done_clicked()
 {
+    qDebug() << "done clicked()" << endl;
+
     user_button_enable.mode = DONE_BUTTON;
     emit send_to_logic_user_button_action(user_button_enable);
 }

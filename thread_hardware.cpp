@@ -191,7 +191,7 @@ void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
 {
     pump.pump_switch = pump_para.pump_switch;
     pump.pump_duty = pump_para.pump_duty;
-    //pump.hold_time = pump_para.hold_time;
+    pump.return_action_mode = pump_para.return_action_mode;
 
     if(pump.pump_switch == HIGH)
     {
@@ -253,27 +253,3 @@ void HardWareControlThread::beep_timeout()
         Beep_Switch(LOW);
     }
 }
-
-//void HardWareControlThread::pump_timeout()
-//{
-//    /* 关闭定时器 */
-//    pump_timer->stop();
-
-//    /* 断开气泵电路 */
-//    Pump_S_Switch(LOW);
-
-//    /* 配置PWM波 */
-//    set_pwm_duty(&pwm_8_13_airpump, 0);
-
-//    /* 更新气泵硬件信息到GUI线程 */
-//    emit send_to_GUI_pump_duty_update(0);
-//}
-
-//void HardWareControlThread::evaporation_timeout()
-//{
-//    evaporation_timer->stop();
-
-//    /* 蒸发完成，通知逻辑线程  */
-//    emit send_to_logic_evaporation_done();
-
-//}

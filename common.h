@@ -49,6 +49,7 @@ typedef struct{
     int pump_switch;//气泵电路开关，HIGH? LOW?
     int pump_duty;//PWM占空比
     //int hold_time;//开启时间
+    int return_action_mode;//气泵有时候是打入气体，有时候是清晰，定时时间达到之后需要采取不同的动作
 } PUMP;
 
 typedef struct{
