@@ -31,8 +31,8 @@ private:
     int flag_inform_duty_0;
 
     QTimer *beep_timer;//鸣叫鸣叫定时控制
-    QTimer *pump_timer;//气泵开启时间
-    QTimer *evaporation_timer;//定时蒸发时间
+//    QTimer *pump_timer;//气泵开启时间
+//    QTimer *evaporation_timer;//定时蒸发时间
 
 signals:
     /* 将实时采集的温湿度信号发送给GUI线程 */
@@ -53,8 +53,8 @@ signals:
     /* 恒温完成，通知逻辑线程 */
     void send_to_logic_thermostat_done();
 
-    /* 蒸发完成，通知逻辑线程 */
-    void send_to_logic_evaporation_done();
+//    /* 蒸发完成，通知逻辑线程 */
+//    void send_to_logic_evaporation_done();
 
 public slots:
     /* 处理来自逻辑线程的恒温信号 */
@@ -73,11 +73,11 @@ private slots:
     /* 蜂鸣器定时溢出 */
     void beep_timeout();
 
-    /* 气泵定时溢出 */
-    void pump_timeout();
+//    /* 气泵定时溢出 */
+//    void pump_timeout();
 
-    /* 蒸发时间溢出 */
-    void evaporation_timeout();
+//    /* 蒸发时间溢出 */
+//    void evaporation_timeout();
 
 };
 

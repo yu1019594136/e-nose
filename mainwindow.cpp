@@ -18,6 +18,7 @@ Q_DECLARE_METATYPE(SAMPLE)
 Q_DECLARE_METATYPE(PLOT_INFO)
 Q_DECLARE_METATYPE(SYSTEM_PARA_SET)
 Q_DECLARE_METATYPE(PUSHBUTTON_STATE)
+Q_DECLARE_METATYPE(USER_BUTTON_ENABLE)
 
 /* 构造函数 */
 MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWindow)
@@ -65,6 +66,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     qRegisterMetaType <PLOT_INFO>("PLOT_INFO");
     qRegisterMetaType <SYSTEM_PARA_SET>("SYSTEM_PARA_SET");
     qRegisterMetaType <PUSHBUTTON_STATE>("PUSHBUTTON_STATE");
+    qRegisterMetaType <USER_BUTTON_ENABLE>("USER_BUTTON_ENABLE");
 
     /* 实例化三个线程并启动,将三个子线程相关的信号关联到GUI主线程的槽函数 */
     logic_thread = new LogicControlThread();
@@ -78,7 +80,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     connect(logic_thread, SIGNAL(send_to_hard_evapor_thermostat(THERMOSTAT)), hardware_thread, SLOT(recei_fro_logic_thermostat(THERMOSTAT)), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_logic_preheat_done()), logic_thread, SLOT(recei_fro_hardware_preheat_done()), Qt::QueuedConnection);
     connect(hardware_thread, SIGNAL(send_to_logic_thermostat_done()), logic_thread, SLOT(recei_fro_hardware_thermostat_done()), Qt::QueuedConnection);
-    connect(hardware_thread, SIGNAL(send_to_logic_evaporation_done()), logic_thread, SLOT(recei_fro_hardware_evapoartion_done()), Qt::QueuedConnection);
+    //connect(hardware_thread, SIGNAL(send_to_logic_evaporation_done()), logic_thread, SLOT(recei_fro_hardware_evapoartion_done()), Qt::QueuedConnection);
     /* 恒温操作时GUI实时更新thermostat_duty */
     connect(hardware_thread, SIGNAL(send_to_GUI_thermostat_duty_update(int)), this, SLOT(recei_fro_hard_thermostat_duty_update(int)), Qt::QueuedConnection);
     /* GUI实时更新按钮状态 */
@@ -101,8 +103,8 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* plot_widget对象接收来自数据处理线程的采样数据绘图命令 */
     connect(dataprocess_thread, SIGNAL(send_to_PlotWidget_plotdata(PLOT_INFO)), plot_widget, SLOT(recei_fro_datapro_dataplot(PLOT_INFO)), Qt::QueuedConnection);
 
-    /* 通知GUI线程set按钮开始计时 */
-    connect(logic_thread, SIGNAL(send_to_GUI_set_enable(int)), this, SLOT(recei_fro_logic_set_enable(int)), Qt::QueuedConnection);
+    /* 通知GUI线程按钮开始计时 */
+    connect(logic_thread, SIGNAL(send_to_GUI_user_buttton_enable(USER_BUTTON_ENABLE)), this, SLOT(recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE)), Qt::QueuedConnection);
 
     /* 参数面板中的参数并发送给逻辑线程 */
     connect(this, SIGNAL(send_to_logic_system_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
@@ -113,6 +115,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 数据处理线程采样完成后发送信号给逻辑线程 */
     connect(dataprocess_thread, SIGNAL(send_to_logic_sample_done()), logic_thread, SLOT(recei_fro_hardware_sample_done()), Qt::QueuedConnection);
+
+    /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
+    connect(this, SIGNAL(send_to_logic_user_button_action(USER_BUTTON_ENABLE)), logic_thread, SLOT(recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE)), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -164,6 +169,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     ui->pushButton_pause->setEnabled(false);
     ui->pushButton_plot->setEnabled(false);
     ui->pushButton_done->setEnabled(false);
+
+    user_button_enable.mode = UNSET;
+    user_button_enable.enable_time = 0;
 }
 
 MainWindow::~MainWindow()
@@ -288,12 +296,28 @@ void MainWindow::recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_st
     ui->pushButton_clear->setEnabled(pushButton_state_para.pushButton_clear);
 }
 
-/* set按钮使能计时开始 */
-void MainWindow::recei_fro_logic_set_enable(int enable_time)
+/* user按钮使能计时开始 */
+void MainWindow::recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_button_enable_para)
 {
-    pushButton_enable_timer->start(enable_time * 1000);
-    ui->pushButton_set->setEnabled(true);
-    qDebug() << "set pushbutton timer start" << endl;
+    if(user_button_enable_para.mode == SET_BUTTON)
+    {
+        pushButton_enable_timer->start(user_button_enable_para.enable_time * 1000);
+        ui->pushButton_set->setEnabled(true);
+        qDebug() << "set pushbutton timer start" << endl;
+    }
+    else if(user_button_enable_para.mode == OPEN_BUTTON)
+    {
+        ui->pushButton_open->setEnabled(true);
+        qDebug() << "open pushbutton enabled" << endl;
+    }
+    else if(user_button_enable_para.mode == CLEAR_BUTTON)
+    {
+        ui->pushButton_clear_2->setEnabled(true);
+        ui->pushButton_pause->setEnabled(false);
+        ui->pushButton_plot->setEnabled(true);
+        ui->pushButton_done->setEnabled(true);
+    }
+
 }
 
 /* 按下al-set按键后读取参数面板中的参数并发送给逻辑线程 */
@@ -340,6 +364,50 @@ void MainWindow::on_pushButton_set_clicked()
     /* 使能al_set按钮, 禁能set按钮 */
     ui->pushButton_al_set->setEnabled(true);
     ui->pushButton_set->setEnabled(false);
+}
+
+void MainWindow::on_pushButton_open_clicked()
+{
+    ui->pushButton_open->setEnabled(false);
+    ui->pushButton_close->setEnabled(true);
+    user_button_enable.mode = OPEN_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
+}
+
+void MainWindow::on_pushButton_close_clicked()
+{
+    ui->pushButton_close->setEnabled(false);
+    user_button_enable.mode = CLOSE_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
+}
+void MainWindow::on_pushButton_clear_2_clicked()
+{
+    ui->pushButton_clear_2->setEnabled(false);
+    ui->pushButton_pause->setEnabled(true);
+
+    user_button_enable.mode = CLEAR_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
+}
+
+void MainWindow::on_pushButton_pause_clicked()
+{
+    ui->pushButton_clear_2->setEnabled(true);
+    ui->pushButton_pause->setEnabled(false);
+
+    user_button_enable.mode = PAUSE_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
+}
+
+void MainWindow::on_pushButton_plot_clicked()
+{
+    user_button_enable.mode = PLOT_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
+}
+
+void MainWindow::on_pushButton_done_clicked()
+{
+    user_button_enable.mode = DONE_BUTTON;
+    emit send_to_logic_user_button_action(user_button_enable);
 }
 
 void MainWindow::on_pushButton_clear_current_clicked()

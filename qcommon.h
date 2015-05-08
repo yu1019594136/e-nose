@@ -3,6 +3,14 @@
 
 #include <QString>
 
+typedef struct{
+    int thermo_switch;//加热带电路开关，HIGH? LOW?
+    float preset_temp;//预设温度
+    //int hold_time;//蒸发时间
+    //bool wait_temp_stable;//是否等待温度稳定在开始恒温
+    bool thermo_inform_flag;//达到恒温状态后是否需要硬件线程返回信号通知逻辑线程
+} THERMOSTAT;
+
 enum SYSTEM_STATE{
     STANDBY = 0,    //待机
     PREHEAT,        //预热
@@ -53,7 +61,7 @@ typedef struct{
 } OPERATION_FLAG;//各个标签用于保证某些状态中的操作仅仅执行一次
 
 enum FLAG_STATUS{
-    UN_SET = 0,
+    UN_SET = 0,//缺省设置状态
     AL_SET
 };
 
@@ -64,16 +72,24 @@ typedef struct{
     bool pushButton_evaporation;
     bool pushButton_sampling;
     bool pushButton_clear;
-
-    bool pushButton_set;
-    bool pushButton_al_set;
-    bool pushButton_open;
-    bool pushButton_close;
-    bool pushButton_clear2;
-    bool pushButton_pause;
-    bool pushButton_plot;
-    bool pushButton_done;
 } PUSHBUTTON_STATE;
 
+typedef struct{
+    int mode;       //使能按钮模式
+    int enable_time;//使能时间，如果为0表示按钮没有使能时间计时
+} USER_BUTTON_ENABLE;
 
+enum BUTTON_MODE{
+    SET_BUTTON = 0,    //使能set按钮
+
+    OPEN_BUTTON,       //使能open按钮
+    CLOSE_BUTTON,      //
+
+    CLEAR_BUTTON,      //使能clear按钮
+    PAUSE_BUTTON,
+    PLOT_BUTTON,
+    DONE_BUTTON,
+
+    UNSET      //缺省设置状态
+};
 #endif // QCOMMON_H

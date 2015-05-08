@@ -26,21 +26,23 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     beep_timer = new QTimer();
     connect(beep_timer, SIGNAL(timeout()), this, SLOT(beep_timeout()));
 
-    /* 实例化一个定时器用于气泵开启时间控制 */
-    pump_timer = new QTimer();
-    connect(pump_timer, SIGNAL(timeout()), this, SLOT(pump_timeout()));
+//    /* 实例化一个定时器用于气泵开启时间控制 */
+//    pump_timer = new QTimer();
+//    connect(pump_timer, SIGNAL(timeout()), this, SLOT(pump_timeout()));
 
-    /* 实例化一个定时器用于蒸发时间控制 */
-    evaporation_timer = new QTimer();
-    connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evaporation_timeout()));
+//    /* 实例化一个定时器用于蒸发时间控制 */
+//    evaporation_timer = new QTimer();
+//    connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evaporation_timeout()));
 
     stopped = false;
+
 }
 
 void HardWareControlThread::run()
 {
     GUI_REALTIME_INFO realtime_info;
     float temp_float = 0.0;
+    //float last_temp_float = 0.0;//用于检测温度是否稳定的辅助变量，如果当前温度比上一次温度低，即认为温度稳定，可以开始恒温
     char temp_str[]="00.000";
     int duty = 0;
     int last_duty = 0;
@@ -54,6 +56,19 @@ void HardWareControlThread::run()
         temp_float = DS18B20_Get_TempFloat("28-0000025ff821");
         realtime_info.ds18b20_temp = QString::number(temp_float, 'f', 3);//将数字的浮点数转化成字符串，精度小数点后3位
 
+//        /* 检测温度是否稳定 */
+//        if(temp_float < last_temp_float)
+//        {
+//            temp_stable = true;
+//            qDebug() << "temp_stable = true" << endl;
+//        }
+//        else
+//        {
+//            last_temp_float = temp_float;
+//            temp_stable = false;
+//            //qDebug() << "temp_stable = false" << endl;
+//        }
+
         sht21_get_temp_string(temp_str);
         realtime_info.sht21_temp = temp_str;
 
@@ -62,7 +77,10 @@ void HardWareControlThread::run()
 
         emit send_to_GUI_realtime_info_update(realtime_info);
 
-        /* 恒温控制 ******************************************/
+//        qDebug() << "thermostat.wait_temp_stable = " << thermostat.wait_temp_stable << endl;
+//        qDebug() << "temp_stable = " << temp_stable << endl;
+
+        /* 恒温控制 **&& ((thermostat.wait_temp_stable && temp_stable) || !thermostat.wait_temp_stable )****************************************/
         if(thermostat.thermo_switch == START)//开始恒温
         {
             /* 检测温度是否稳定 */
@@ -80,28 +98,23 @@ void HardWareControlThread::run()
                     emit send_to_logic_preheat_done();
                 else
                 {
-                    emit send_to_logic_thermostat_done();
-
-                    /* 启动定时器，开始对蒸发计时 */
-                    evaporation_timer->start(thermostat.hold_time);
+                    if(thermostat.thermo_inform_flag)
+                        emit send_to_logic_thermostat_done();
                 }
             }
 
             if(duty != last_duty)
+            {
                 set_pwm_duty(&pwm_9_42_zhenfashi, duty);
+                /* 恒温时将实时的duty值发送给GUI线程 */
+                emit send_to_GUI_thermostat_duty_update(duty);
+            }
 
             last_duty = duty;
 
-            /* 恒温时将实时的duty值发送给GUI线程 */
-            emit send_to_GUI_thermostat_duty_update(duty);
         }
         msleep(200);
     }
-
-    /*  */
-//    delete beep_timer;
-//    delete pump_timer;
-//    delete evaporation_timer;
 
     /* 操作结束前，
      * 关闭各个功能硬件电路，恢复系统配置；
@@ -121,7 +134,7 @@ void HardWareControlThread::recei_fro_logic_thermostat(THERMOSTAT thermostat_par
 {
     thermostat.thermo_switch = thermostat_para.thermo_switch;
     thermostat.preset_temp = thermostat_para.preset_temp;
-    thermostat.hold_time = thermostat_para.hold_time;
+    thermostat.thermo_inform_flag = thermostat_para.thermo_inform_flag;
 
     if(thermostat.thermo_switch == STOP)//停止恒温
     {
@@ -178,7 +191,7 @@ void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
 {
     pump.pump_switch = pump_para.pump_switch;
     pump.pump_duty = pump_para.pump_duty;
-    pump.hold_time = pump_para.hold_time;
+    //pump.hold_time = pump_para.hold_time;
 
     if(pump.pump_switch == HIGH)
     {
@@ -188,8 +201,8 @@ void HardWareControlThread::recei_fro_logic_pump(PUMP pump_para)
         /* 接通气泵电路 */
         Pump_S_Switch(HIGH);
 
-        /* 启动计时 */
-        pump_timer->start(pump.hold_time);
+//        /* 启动计时 */
+//        pump_timer->start(pump.hold_time);
 
         /* 更新气泵硬件信息到GUI线程 */
         emit send_to_GUI_pump_duty_update(pump.pump_duty);
@@ -241,26 +254,26 @@ void HardWareControlThread::beep_timeout()
     }
 }
 
-void HardWareControlThread::pump_timeout()
-{
-    /* 关闭定时器 */
-    pump_timer->stop();
+//void HardWareControlThread::pump_timeout()
+//{
+//    /* 关闭定时器 */
+//    pump_timer->stop();
 
-    /* 断开气泵电路 */
-    Pump_S_Switch(LOW);
+//    /* 断开气泵电路 */
+//    Pump_S_Switch(LOW);
 
-    /* 配置PWM波 */
-    set_pwm_duty(&pwm_8_13_airpump, 0);
+//    /* 配置PWM波 */
+//    set_pwm_duty(&pwm_8_13_airpump, 0);
 
-    /* 更新气泵硬件信息到GUI线程 */
-    emit send_to_GUI_pump_duty_update(0);
-}
+//    /* 更新气泵硬件信息到GUI线程 */
+//    emit send_to_GUI_pump_duty_update(0);
+//}
 
-void HardWareControlThread::evaporation_timeout()
-{
-    evaporation_timer->stop();
+//void HardWareControlThread::evaporation_timeout()
+//{
+//    evaporation_timer->stop();
 
-    /* 蒸发完成，通知逻辑线程  */
-    emit send_to_logic_evaporation_done();
+//    /* 蒸发完成，通知逻辑线程  */
+//    emit send_to_logic_evaporation_done();
 
-}
+//}

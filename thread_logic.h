@@ -32,10 +32,14 @@ private:
 
     OPERATION_FLAG operation_flag;
     PUSHBUTTON_STATE pushButton_state;
+    USER_BUTTON_ENABLE user_button_enable;
 
-    bool read_para_flag;
+    bool read_para_flag;//控制读取参数的时机
+    bool open_clicked_flag;//控制蒸发停止的时机,用户点击open后应该先暂时停止恒温
+    bool close_clicked_flag;//控制蒸发开始的时机,用户点击close后应该恢复恒温
 
-    QTimer *reac_close_timer;
+    QTimer *close_pump_and_reac_timer;
+    QTimer *evaporation_timer;
 
 signals:
     /* 发送给硬件控制线程的恒温信号 */
@@ -57,7 +61,7 @@ signals:
     void send_to_GUI_pushButton_state(PUSHBUTTON_STATE pushButton_state_para);
 
     /* set按钮使能计时开始 */
-    void send_to_GUI_set_enable(int enable_time);
+    void send_to_GUI_user_buttton_enable(USER_BUTTON_ENABLE user_button_enable_para);
 
 public slots:
     /* 处理来自硬件线程预热完成的信号 */
@@ -66,19 +70,22 @@ public slots:
     /* 处理来自硬件线程恒温完成的信号 */
     void recei_fro_hardware_thermostat_done();
 
-    /* 处理来自硬件线程蒸发完成的信号 */
-    void recei_fro_hardware_evapoartion_done();
-
     /* 接收GUI线程发送来的系统控制参数 */
     void recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
     /* 接收来自数据处理线程的采样完成信号 */
     void recei_fro_hardware_sample_done();
 
+    /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
+    void recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE user_button_enable_para);
+
 private slots:
 
     /* 打入样本气体到反应室时可以定时封闭反应室 */
-    void close_reac_room();
+    void close_pump_and_reac();
+
+    /* 处理来自硬件线程蒸发完成的信号 */
+    void evapoartion_timeout_done();
 
 };
 

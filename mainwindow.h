@@ -26,8 +26,12 @@ protected:
 signals:
     void send_to_logic_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
+    /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
+    void send_to_logic_user_button_action(USER_BUTTON_ENABLE user_button_enable_para);
+
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
+
     void timerUpdate();//用于更新时间
 
     void on_pushButton_clear_current_clicked();
@@ -37,6 +41,18 @@ private slots:
     void on_pushButton_al_set_clicked();
 
     void on_pushButton_set_clicked();
+
+    void on_pushButton_open_clicked();
+
+    void on_pushButton_close_clicked();
+
+    void on_pushButton_clear_2_clicked();
+
+    void on_pushButton_pause_clicked();
+
+    void on_pushButton_plot_clicked();
+
+    void on_pushButton_done_clicked();
 
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */
@@ -54,8 +70,8 @@ public slots:
     /* 接收来自逻辑线程的系统状态信息 */
     void recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_state_para);
 
-    /* set按钮使能计时开始 */
-    void recei_fro_logic_set_enable(int enable_time);
+    /* 用户按钮使能计时开始 */
+    void recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_button_enable_para);
 
 private:
     Ui::MainWindow *ui;
@@ -67,6 +83,8 @@ private:
     SYSTEM_STATE system_state;  //系统控制参数
     SYSTEM_PARA_SET system_para_set;
     QTimer *pushButton_enable_timer;
+
+    USER_BUTTON_ENABLE user_button_enable;//用户在系统操作面板按下按钮后应该通知逻辑线程产生动作
 };
 
 #endif // MAINWINDOW_H

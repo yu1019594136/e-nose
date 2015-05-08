@@ -41,12 +41,6 @@ enum THERMO{
 };
 
 typedef struct{
-    int thermo_switch;//加热带电路开关，HIGH? LOW?
-    float preset_temp;//预设温度
-    int hold_time;//蒸发时间
-} THERMOSTAT;
-
-typedef struct{
     int beep_count;//鸣叫次数
     int beep_interval;//鸣叫时间间隔
 } BEEP;
@@ -54,7 +48,7 @@ typedef struct{
 typedef struct{
     int pump_switch;//气泵电路开关，HIGH? LOW?
     int pump_duty;//PWM占空比
-    int hold_time;//开启时间
+    //int hold_time;//开启时间
 } PUMP;
 
 typedef struct{
