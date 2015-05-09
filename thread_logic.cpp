@@ -58,6 +58,16 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
+                //magnetic_para.M1 = HIGH;
+                magnetic_para.M1 = LOW;
+                //magnetic_para.M2 = HIGH;
+                magnetic_para.M2 = LOW;
+                //magnetic_para.M3 = HIGH;
+                magnetic_para.M3 = LOW;
+                //magnetic_para.M4 = HIGH;
+                magnetic_para.M4 = LOW;
+                emit send_to_hard_magnetic(magnetic_para);
+
                 /* 关闭加热带 */
                 thermostat_para.thermo_switch = STOP;
                 emit send_to_hard_evapor_thermostat(thermostat_para);
@@ -97,7 +107,13 @@ void LogicControlThread::run()
         {
             if(operation_flag.thermo_flag == UN_SET)
             {
+                pushButton_state.pushButton_standby = true;
                 pushButton_state.pushButton_preheat = true;
+                pushButton_state.pushButton_thermo = false;
+                pushButton_state.pushButton_evaporation = false;
+                pushButton_state.pushButton_sampling = false;
+                pushButton_state.pushButton_clear = false;
+
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 通知GUI线程使能set按钮5s */
@@ -128,7 +144,12 @@ void LogicControlThread::run()
         {
             if(operation_flag.evaporation_flag == UN_SET)
             {
+                pushButton_state.pushButton_standby = true;
+                pushButton_state.pushButton_preheat = true;
                 pushButton_state.pushButton_thermo = true;
+                pushButton_state.pushButton_evaporation = false;
+                pushButton_state.pushButton_sampling = false;
+                pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 通知GUI线程使能open按钮 */
@@ -188,7 +209,12 @@ void LogicControlThread::run()
         {
             if(operation_flag.sampling_flag == UN_SET)
             {
+                pushButton_state.pushButton_standby = true;
+                pushButton_state.pushButton_preheat = true;
+                pushButton_state.pushButton_thermo = true;
                 pushButton_state.pushButton_evaporation = true;
+                pushButton_state.pushButton_sampling = false;
+                pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 打开采样气路 */
@@ -236,7 +262,12 @@ void LogicControlThread::run()
             {
                 qDebug() << "clear start" << endl;
 
+                pushButton_state.pushButton_standby = true;
+                pushButton_state.pushButton_preheat = true;
+                pushButton_state.pushButton_thermo = true;
+                pushButton_state.pushButton_evaporation = true;
                 pushButton_state.pushButton_sampling = true;
+                pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 打开气泵清洗气路 */
@@ -355,16 +386,16 @@ void LogicControlThread::close_pump_and_reac()
     else if(pump_para.return_action_mode == CLEAR)//清洗阶段气泵清洗完成后，需要密闭蒸发室和反应室
     {
         /* 封闭蒸发室和反应室 */
-        //magnetic_para.M1 = HIGH;
-        magnetic_para.M1 = LOW;
-        magnetic_para.M2 = HIGH;
-        //magnetic_para.M2 = LOW;
-        //magnetic_para.M3 = HIGH;
-        magnetic_para.M3 = LOW;
-        //magnetic_para.M4 = HIGH;
-        magnetic_para.M4 = LOW;
+//        //magnetic_para.M1 = HIGH;
+//        magnetic_para.M1 = LOW;
+//        magnetic_para.M2 = HIGH;
+//        //magnetic_para.M2 = LOW;
+//        //magnetic_para.M3 = HIGH;
+//        magnetic_para.M3 = LOW;
+//        //magnetic_para.M4 = HIGH;
+//        magnetic_para.M4 = LOW;
 
-        emit send_to_hard_magnetic(magnetic_para);
+//        emit send_to_hard_magnetic(magnetic_para);
 
         /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
         user_button_enable.mode = CLEAR_BUTTON;
@@ -459,22 +490,27 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
     }
     else if(user_button_enable_para.mode == DONE_BUTTON)
     {
+        /* 关闭气泵，安保措施：点击done时气泵可能还在运行 */
+        pump_para.pump_switch = LOW;
+        pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+        emit send_to_hard_pump(pump_para);
+
         /* 点击done按钮后，禁能clear、pause、plot、done四个按钮 */
         user_button_enable.mode = UNSET;
         user_button_enable.enable_time = 0;
         emit send_to_GUI_user_buttton_enable(user_button_enable);
 
         /* 根据单次采样还是连续采样决定回到待机状态或者预热状态 */
-        if(system_para_set.sample_style == SINGLE)
+        if(system_para_set.sample_style == SINGLE )
         {
-            system_state = STANDBY;
-            operation_flag.standby_flag = UN_SET;
+            system_state = PREHEAT;
+            operation_flag.preheat_flag = UN_SET;
             operation_flag.clear_flag = AL_SET;
         }
         else if(system_para_set.sample_style == CONTINUE)
         {
-            system_state = PREHEAT;
-            operation_flag.preheat_flag = UN_SET;
+            system_state = THERMO;
+            operation_flag.thermo_flag = UN_SET;
             operation_flag.clear_flag = AL_SET;
         }
     }
