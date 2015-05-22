@@ -22,14 +22,13 @@ LogicControlThread::LogicControlThread(QObject *parent) :
     evaporation_timer = new QTimer();
     connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evapoartion_timeout_done()));
 
-    system_state = PREHEAT;
-
-    operation_flag.standby_flag = AL_SET;
-    operation_flag.preheat_flag = UN_SET;
-    operation_flag.evaporation_flag = AL_SET;
-    operation_flag.thermo_flag = AL_SET;
-    operation_flag.sampling_flag = AL_SET;
-    operation_flag.clear_flag = AL_SET;
+    system_state = STANDBY;//PREHEAT;
+    operation_flag.standby_flag =       UN_SET;
+    operation_flag.preheat_flag =       AL_SET;
+    operation_flag.evaporation_flag =   AL_SET;
+    operation_flag.thermo_flag =        AL_SET;
+    operation_flag.sampling_flag =      AL_SET;
+    operation_flag.clear_flag =         AL_SET;
 
     pushButton_state.pushButton_standby = false;
     pushButton_state.pushButton_preheat = false;
@@ -37,6 +36,38 @@ LogicControlThread::LogicControlThread(QObject *parent) :
     pushButton_state.pushButton_evaporation = false;
     pushButton_state.pushButton_sampling = false;
     pushButton_state.pushButton_clear = false;
+
+    /* 采样过程有四个状态，1：吸入气体；2：吸入等待；3：呼出气体；4：呼出等待 */
+    hale_count = 0;
+    hale_state = 0;
+    hale_state_change = false;
+
+    /* 清洗气室标志 1:清洗反应室; 2:清洗蒸发室 */
+    clear_state = 0;
+    clear_state_change = false;
+
+    /* 每一次呼吸4个阶段的持续时间以及气泵转速 */
+    pwm_duty[0] = 60000;
+    pwm_duty[1] = 55000;
+    pwm_duty[2] = 125000;
+
+    inhale_time[0] = 10;
+    inhale_time[1] = 1;
+    inhale_time[2] = 1;
+
+    inhale_wait_time[0] = 20;
+    inhale_wait_time[1] = 6;
+    inhale_wait_time[2] = 6;
+
+    exhale_time[0] = 0;
+    exhale_time[1] = 2;
+    exhale_time[2] = 2;
+
+    exhale_wait_time[0] = 0;
+    exhale_wait_time[1] = 2;
+    exhale_wait_time[2] = 2;
+
+    pwm_state = 0;
 }
 
 void LogicControlThread::run()
@@ -58,25 +89,75 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
-                //magnetic_para.M1 = HIGH;
-                magnetic_para.M1 = LOW;
-                //magnetic_para.M2 = HIGH;
-                magnetic_para.M2 = LOW;
-                //magnetic_para.M3 = HIGH;
-                magnetic_para.M3 = LOW;
-                //magnetic_para.M4 = HIGH;
-                magnetic_para.M4 = LOW;
-                emit send_to_hard_magnetic(magnetic_para);
-
-                /* 关闭加热带 */
-                thermostat_para.thermo_switch = STOP;
-                emit send_to_hard_evapor_thermostat(thermostat_para);
-
-                /* 关闭气泵 */
-                pump_para.pump_switch = LOW;
-                emit send_to_hard_pump(pump_para);
+                /* 先清洗反应室 */
+                clear_state = 0;
+                clear_state_change = true;
 
                 operation_flag.standby_flag = AL_SET;
+            }
+            if(clear_state_change)
+            {
+                clear_state++;
+                clear_state_change = false;
+
+                if(clear_state == 1)
+                {
+                    /* 打开气泵, 清洗反应室 */
+                    //magnetic_para.M1 = HIGH;
+                    magnetic_para.M1 = LOW;
+                    //magnetic_para.M2 = HIGH;
+                    magnetic_para.M2 = LOW;
+                    //magnetic_para.M3 = HIGH;
+                    magnetic_para.M3 = LOW;
+                    magnetic_para.M4 = HIGH;
+                    //magnetic_para.M4 = LOW;
+                    emit send_to_hard_magnetic(magnetic_para);
+
+                    msleep(1000);
+
+                    pump_para.pump_switch = HIGH;
+                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                    pump_para.return_action_mode = STANDBY;//
+                    emit send_to_hard_pump(pump_para);
+
+                    /* 定时蒸发室清洗时间 */
+                    close_pump_and_reac_timer->start(30 * 1000);
+                    qDebug() << "reac_timer->start; evapor_clear_time 30 s." << endl;
+                }
+                else if(clear_state == 2)
+                {
+                    /* 打开气泵, 清洗蒸发室*/
+                    magnetic_para.M1 = HIGH;
+                    //magnetic_para.M1 = LOW;
+                    //magnetic_para.M2 = HIGH;
+                    magnetic_para.M2 = LOW;
+                    //magnetic_para.M3 = HIGH;
+                    magnetic_para.M3 = LOW;
+                    //magnetic_para.M4 = HIGH;
+                    magnetic_para.M4 = LOW;
+                    emit send_to_hard_magnetic(magnetic_para);
+
+                    msleep(1000);
+
+                    pump_para.pump_switch = HIGH;
+                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                    pump_para.return_action_mode = STANDBY;//
+                    emit send_to_hard_pump(pump_para);
+
+                    /* 定时蒸发室清洗时间 */
+                    close_pump_and_reac_timer->start(30 * 1000);
+                    qDebug() << "reac_timer->start; reac_clear_time 30 s." << endl;
+                }
+                else if(clear_state == 3)//清洗完成
+                {
+                    clear_state = 0;
+                    clear_state_change = false;
+
+                    /* 切换到下一个状态 */
+                    system_state = PREHEAT;
+                    operation_flag.preheat_flag = UN_SET;
+                    operation_flag.standby_flag = AL_SET;
+                }
             }
         }
 
@@ -217,42 +298,141 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
-                /* 打开采样气路 */
-                magnetic_para.M1 = HIGH;
-                //magnetic_para.M1 = LOW;
-                magnetic_para.M2 = HIGH;
-                //magnetic_para.M2 = LOW;
-                magnetic_para.M3 = HIGH;
-                //magnetic_para.M3 = LOW;
-                //magnetic_para.M4 = HIGH;
-                magnetic_para.M4 = LOW;
-                emit send_to_hard_magnetic(magnetic_para);
-
-                /* 打入样本气体10秒钟 */
-                pump_para.pump_switch = HIGH;
-                pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-                pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
-                emit send_to_hard_pump(pump_para);
-
-                /* 打入样本气体到反应室后定时封闭反应室 */
-                close_pump_and_reac_timer->start(system_para_set.pump_up_time * 1000);
-                qDebug() << "close_pump_and_reac_timer->start;" << system_para_set.pump_up_time << " s." << endl;
-
-                /* 同时开始采样 */
+                /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
                 sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = system_para_set.data_file_path;//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = true;
                 emit send_to_dataproc_sample(sample_para);
 
-                /* 蒸发完成，采样开始后可以停止蒸发室的恒温 */
-                thermostat_para.thermo_switch = STOP;
-                //thermostat_para.preset_temp = system_para_set.preset_temp;
-                //thermostat_para.hold_time = 0;//单位ms, 蒸发时间,硬件线程恒温到预设温度后自动启动定时器开始计时蒸发时间
-                emit send_to_hard_evapor_thermostat(thermostat_para);
+                /* 先采集5s空气中的响应 */
+                msleep(5000);
+
+                /* 读取呼吸次数, 进入状态1 */
+                hale_count = system_para_set.hale_count;
+                hale_state_change = true;
+                hale_state = 0;
+
+                pwm_state = 0;
+
                 qDebug() << "sample start, and thermo stop" << endl;
 
                 operation_flag.sampling_flag = AL_SET;
+            }
+
+            if(hale_count)//如果呼吸次数大于0
+            {
+                if(hale_state_change)
+                {
+                    hale_state++;//切换到下一个状态,
+                    hale_state_change = false;//保证本段代码只执行一次
+
+                    /* 参数检查，四个状态参数中，如果需要跳过某个状态，那么将该参数设置为0即可 */
+                    if(hale_state == 1 && inhale_time[pwm_state] == 0)//跳过状态1
+                    {
+                        hale_state = 2;
+                        qDebug() << "jump from hale state 1 to hale state 2" << endl;
+                    }
+                    if(hale_state == 2 && inhale_wait_time[pwm_state] == 0)//跳过状态2
+                    {
+                        hale_state = 3;
+                        qDebug() << "jump from hale state 2 to hale state 3" << endl;
+                    }
+                    if(hale_state == 3 && exhale_time[pwm_state] == 0)//跳过状态3
+                    {
+                        hale_state = 4;
+                        qDebug() << "jump from hale state 3 to hale state 4" << endl;
+                    }
+                    if(hale_state == 4 && exhale_wait_time[pwm_state] == 0)//跳过状态4
+                    {
+                        hale_state = 5;
+                        qDebug() << "jump from hale state 4 to hale state 5" << endl;
+                    }
+
+                    if(hale_state == 1 && inhale_time[pwm_state] != 0)
+                    {
+                        /* 打开采样气路, 吸入样本气体 */
+                        magnetic_para.M1 = HIGH;
+                        //magnetic_para.M1 = LOW;
+                        magnetic_para.M2 = HIGH;
+                        //magnetic_para.M2 = LOW;
+                        magnetic_para.M3 = HIGH;
+                        //magnetic_para.M3 = LOW;
+                        magnetic_para.M4 = HIGH;
+                        //magnetic_para.M4 = LOW;
+                        emit send_to_hard_magnetic(magnetic_para);
+
+                        /* 吸入样本气体n秒钟 */
+                        pump_para.pump_switch = HIGH;
+                        pump_para.pump_duty = pwm_duty[pwm_state];//全速运转,duty取值范围0-125000
+                        pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
+                        emit send_to_hard_pump(pump_para);
+
+                        /* 打入样本气体到反应室后定时封闭反应室 */
+                        close_pump_and_reac_timer->start(inhale_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, inhale sample time" << inhale_time[pwm_state] << " s." << endl;
+
+                    }
+                    else if(hale_state == 2 && inhale_wait_time[pwm_state] != 0)
+                    {
+                        /* 吸入样本气体后等待...... */
+                        close_pump_and_reac_timer->start(inhale_wait_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, inhale wait time" << inhale_wait_time[pwm_state] << " s." << endl;
+                    }
+                    else if(hale_state == 3 && exhale_time[pwm_state] != 0)
+                    {
+                        /* 打开清洗气路，做呼气动作 */
+                        //magnetic_para.M1 = HIGH;
+                        magnetic_para.M1 = LOW;
+                        magnetic_para.M2 = HIGH;
+                        //magnetic_para.M2 = LOW;
+                        //magnetic_para.M3 = HIGH;
+                        magnetic_para.M3 = LOW;
+                        magnetic_para.M4 = HIGH;
+                        //magnetic_para.M4 = LOW;
+                        emit send_to_hard_magnetic(magnetic_para);
+
+                        /* 呼出样本气体n秒 */
+                        pump_para.pump_switch = HIGH;
+                        pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                        pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
+                        emit send_to_hard_pump(pump_para);
+
+                        /* 呼出反应室样本气体n秒 */
+                        close_pump_and_reac_timer->start(exhale_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, exhale time" << exhale_time[pwm_state] << " s." << endl;
+                    }
+                    else if(hale_state == 4 && exhale_wait_time[pwm_state] != 0)
+                    {
+                        /* 呼出反应室样本气体n秒后，等待 */
+                        close_pump_and_reac_timer->start(exhale_wait_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, exhale wait time" << exhale_wait_time[pwm_state] << " s." << endl;
+                    }
+                    else if(hale_state == 5)//一次呼吸结束
+                    {
+                        if(hale_count > 0)//如果呼吸次数大于0，则继续下一次
+                        {
+                            hale_count--;
+                            pwm_state++;
+                            qDebug() << pwm_state << "th hale sample done!" << endl;
+                            hale_state = 0;
+                            hale_state_change = true;
+                        }
+                        else//否则等待采样时间到达后进入下一个系统状态
+                        {
+                            //nothing;
+                            hale_state = 0;
+                            pwm_state = 0;
+                            hale_state_change = false;
+
+                            qDebug() << "hale_count = 0, hale sample done!" << endl;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                //qDebug() << "hale_count = 0, hale sample done!" << endl;
             }
         }
 
@@ -262,6 +442,12 @@ void LogicControlThread::run()
             {
                 qDebug() << "clear start" << endl;
 
+                /* 采样完成，清洗开始后可以停止蒸发室的恒温 */
+                thermostat_para.thermo_switch = STOP;
+                //thermostat_para.preset_temp = system_para_set.preset_temp;
+                //thermostat_para.hold_time = 0;//单位ms, 蒸发时间,硬件线程恒温到预设温度后自动启动定时器开始计时蒸发时间
+                emit send_to_hard_evapor_thermostat(thermostat_para);
+
                 pushButton_state.pushButton_standby = true;
                 pushButton_state.pushButton_preheat = true;
                 pushButton_state.pushButton_thermo = true;
@@ -270,27 +456,79 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
-                /* 打开气泵清洗气路 */
-                magnetic_para.M1 = HIGH;
-                //magnetic_para.M1 = LOW;
-                //magnetic_para.M2 = HIGH;
-                magnetic_para.M2 = LOW;
-                //magnetic_para.M3 = HIGH;
-                magnetic_para.M3 = LOW;
-                magnetic_para.M4 = HIGH;
-                //magnetic_para.M4 = LOW;
-                emit send_to_hard_magnetic(magnetic_para);
+                /* 开始采样 */
+                sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
+                sample_para.sample_time = system_para_set.evapor_clear_time / 2;//单位s, 每个通道的采样时间长度
+                sample_para.filename_prefix = "clear_data";//数据文件路径以及文件名前缀,
+                sample_para.sample_inform_flag = false;
+                emit send_to_dataproc_sample(sample_para);
 
-                pump_para.pump_switch = HIGH;
-                pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-                pump_para.return_action_mode = CLEAR;//
-                emit send_to_hard_pump(pump_para);
-
-                /* 定时蒸发室清洗时间 */
-                close_pump_and_reac_timer->start(system_para_set.evapor_clear_time * 1000);
-                qDebug() << "close_pump_and_reac_timer->start;" << system_para_set.evapor_clear_time << " s." << endl;
+                /* 先清洗反应室 */
+                clear_state = 0;
+                clear_state_change = true;
 
                 operation_flag.clear_flag = AL_SET;
+            }
+
+            if(clear_state_change)
+            {
+                clear_state++;
+                clear_state_change = false;
+
+                if(clear_state == 1)
+                {
+                    /* 打开气泵, 清洗反应室 */
+                    //magnetic_para.M1 = HIGH;
+                    magnetic_para.M1 = LOW;
+                    //magnetic_para.M2 = HIGH;
+                    magnetic_para.M2 = LOW;
+                    //magnetic_para.M3 = HIGH;
+                    magnetic_para.M3 = LOW;
+                    magnetic_para.M4 = HIGH;
+                    //magnetic_para.M4 = LOW;
+                    emit send_to_hard_magnetic(magnetic_para);
+
+                    msleep(1000);
+
+                    pump_para.pump_switch = HIGH;
+                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                    pump_para.return_action_mode = CLEAR;//
+                    emit send_to_hard_pump(pump_para);
+
+                    /* 定时蒸发室清洗时间 */
+                    close_pump_and_reac_timer->start(system_para_set.evapor_clear_time * 1000);
+                    qDebug() << "reac_timer->start; evapor_clear_time " << system_para_set.evapor_clear_time << " s." << endl;
+                }
+                else if(clear_state == 2)
+                {
+                    /* 打开气泵, 清洗蒸发室*/
+                    magnetic_para.M1 = HIGH;
+                    //magnetic_para.M1 = LOW;
+                    //magnetic_para.M2 = HIGH;
+                    magnetic_para.M2 = LOW;
+                    //magnetic_para.M3 = HIGH;
+                    magnetic_para.M3 = LOW;
+                    //magnetic_para.M4 = HIGH;
+                    magnetic_para.M4 = LOW;
+                    emit send_to_hard_magnetic(magnetic_para);
+
+                    msleep(1000);
+
+                    pump_para.pump_switch = HIGH;
+                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                    pump_para.return_action_mode = CLEAR;//
+                    emit send_to_hard_pump(pump_para);
+
+                    /* 定时蒸发室清洗时间 */
+                    close_pump_and_reac_timer->start(system_para_set.reac_clear_time * 1000);
+                    qDebug() << "reac_timer->start; reac_clear_time " << system_para_set.reac_clear_time << " s." << endl;
+                }
+                else if(clear_state == 3)//清洗完成
+                {
+                    clear_state = 0;
+                    clear_state_change = false;
+                }
+
             }
 
         }
@@ -359,48 +597,121 @@ void LogicControlThread::close_pump_and_reac()
 {
     /* 关闭定时器 */
     close_pump_and_reac_timer->stop();
-    qDebug() << "close_pump_and_reac_timer->stop()" << endl;
+    qDebug() << "reac_timer->stop()" << endl;
 
-    /* 关闭气泵 */
-    pump_para.pump_switch = LOW;
-    //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-    //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
-    emit send_to_hard_pump(pump_para);
-
-    msleep(1000);
-
-    if(pump_para.return_action_mode == SAMPLING)//采样阶段打入样本气体后需要封闭反应室
+    if(pump_para.return_action_mode == STANDBY)
     {
-        /* 封闭反应室 */
-        magnetic_para.M1 = HIGH;
-        //magnetic_para.M1 = LOW;
-        //magnetic_para.M2 = HIGH;
-        magnetic_para.M2 = LOW;
-        magnetic_para.M3 = HIGH;
-        //magnetic_para.M3 = LOW;
-        //magnetic_para.M4 = HIGH;
-        magnetic_para.M4 = LOW;
+        if(clear_state == 1)
+        {
+            /* 关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
 
-        emit send_to_hard_magnetic(magnetic_para);
+            qDebug() << "evapor clear done!" << endl;
+
+            clear_state_change = true;
+        }
+        else if(clear_state == 2)
+        {
+            /* 关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
+
+            qDebug() << "reac clear done!" << endl;
+
+            clear_state_change = true;
+        }
     }
-    else if(pump_para.return_action_mode == CLEAR)//清洗阶段气泵清洗完成后，需要密闭蒸发室和反应室
+    else if(pump_para.return_action_mode == SAMPLING)//采样阶段打入样本气体后需要封闭反应室
     {
-        /* 封闭蒸发室和反应室 */
-//        //magnetic_para.M1 = HIGH;
-//        magnetic_para.M1 = LOW;
-//        magnetic_para.M2 = HIGH;
-//        //magnetic_para.M2 = LOW;
-//        //magnetic_para.M3 = HIGH;
-//        magnetic_para.M3 = LOW;
-//        //magnetic_para.M4 = HIGH;
-//        magnetic_para.M4 = LOW;
+        if(hale_state == 1)
+        {
+            /* 吸入样本气体结束，密封反应室, 蒸发室进气口密封 */
+            //magnetic_para.M1 = HIGH;
+            magnetic_para.M1 = LOW;
+            //magnetic_para.M2 = HIGH;
+            magnetic_para.M2 = LOW;
+            magnetic_para.M3 = HIGH;
+            //magnetic_para.M3 = LOW;
+            //magnetic_para.M4 = HIGH;
+            magnetic_para.M4 = LOW;
+            emit send_to_hard_magnetic(magnetic_para);
 
-//        emit send_to_hard_magnetic(magnetic_para);
+            /* 吸入样本气体结束，关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
+        }
+        else if (hale_state == 2)
+        {
 
-        /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
-        user_button_enable.mode = CLEAR_BUTTON;
-        user_button_enable.enable_time = 0;
-        emit send_to_GUI_user_buttton_enable(user_button_enable);
+        }
+        else if (hale_state == 3)
+        {
+            /* 呼出样本气体结束，密封反应室, 蒸发室进气口密封 */
+            //magnetic_para.M1 = HIGH;
+            magnetic_para.M1 = LOW;
+            //magnetic_para.M2 = HIGH;
+            magnetic_para.M2 = LOW;
+            magnetic_para.M3 = HIGH;
+            //magnetic_para.M3 = LOW;
+            //magnetic_para.M4 = HIGH;
+            magnetic_para.M4 = LOW;
+            emit send_to_hard_magnetic(magnetic_para);
+
+            /* 呼出样本气体结束，关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
+        }
+        else if (hale_state == 4)
+        {
+
+        }
+        else
+        {
+            //nothing;
+        }
+
+        hale_state_change = true;//切换到下一个状态
+    }
+    else if(pump_para.return_action_mode == CLEAR)//清洗阶段气泵清洗完成后
+    {
+        if(clear_state == 1)
+        {
+            /* 关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
+
+            qDebug() << "evapor clear done!" << endl;
+
+            clear_state_change = true;
+        }
+        else if(clear_state == 2)
+        {
+            /* 关闭气泵 */
+            pump_para.pump_switch = LOW;
+            //pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+            //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
+            emit send_to_hard_pump(pump_para);
+
+            qDebug() << "reac clear done!" << endl;
+
+            /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
+            user_button_enable.mode = CLEAR_BUTTON;
+            user_button_enable.enable_time = 0;
+            emit send_to_GUI_user_buttton_enable(user_button_enable);
+
+            clear_state_change = true;
+        }
     }
 }
 
@@ -418,12 +729,18 @@ void LogicControlThread::recei_fro_hardware_sample_done()
     emit send_to_hard_beep(beep_para);
 
     qDebug() << "sample done!" << endl;
-
 }
 
 void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info)
 {
     system_para_set = system_para_set_info;
+
+    /* 呼吸时间设置 */
+    system_para_set.inhale_time = 1;
+    system_para_set.inhale_wait_time = 6;
+    system_para_set.exhale_time = 2;
+    system_para_set.exhale_wait_time = 2;
+    system_para_set.hale_count = 1;
 
     read_para_flag = true;
 
@@ -436,6 +753,12 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
     qDebug() << "system_para_set.evapor_clear_time = " << system_para_set.evapor_clear_time << endl;
     qDebug() << "system_para_set.reac_clear_time = " << system_para_set.reac_clear_time << endl;
     qDebug() << "system_para_set.data_file_path = " << system_para_set.data_file_path << endl;
+
+    qDebug() << "system_para_set.inhale_time = " << system_para_set.inhale_time << endl;
+    qDebug() << "system_para_set.inhale_wait_time = " << system_para_set.inhale_wait_time << endl;
+    qDebug() << "system_para_set.exhale_time = " << system_para_set.exhale_time << endl;
+    qDebug() << "system_para_set.exhale_wait_time = " << system_para_set.exhale_wait_time << endl;
+    qDebug() << "system_para_set.hale_count = " << system_para_set.hale_count << endl;
 }
 
 /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
@@ -452,8 +775,8 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
     else if(user_button_enable_para.mode == CLEAR_BUTTON)
     {
         /* 打开清洗气路 */
-        magnetic_para.M1 = HIGH;
-        //magnetic_para.M1 = LOW;
+        //magnetic_para.M1 = HIGH;
+        magnetic_para.M1 = LOW;
         //magnetic_para.M2 = HIGH;
         magnetic_para.M2 = LOW;
         //magnetic_para.M3 = HIGH;

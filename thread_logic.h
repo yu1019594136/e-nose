@@ -41,6 +41,23 @@ private:
     QTimer *close_pump_and_reac_timer;
     QTimer *evaporation_timer;
 
+    /* 采样过程有四个状态，1：吸入气体；2：吸入等待；3：呼出气体；4：呼出等待 */
+    unsigned int hale_state;
+    unsigned int hale_count;
+    bool hale_state_change;
+
+    /* 清洗气室标志 */
+    unsigned int clear_state;
+    bool clear_state_change;
+
+    /* 每一次呼吸4个阶段的持续时间以及气泵转速 */
+    int pwm_duty[3];
+    int inhale_time[3];
+    int inhale_wait_time[3];
+    int exhale_time[3];
+    int exhale_wait_time[3];
+    int pwm_state;
+
 signals:
     /* 发送给硬件控制线程的恒温信号 */
     void send_to_hard_evapor_thermostat(THERMOSTAT thermostat_para);

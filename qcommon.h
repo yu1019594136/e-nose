@@ -44,6 +44,14 @@ typedef struct{
     int evapor_clear_time;//蒸发室清洗时间
     int reac_clear_time;//反应室清洗时间
     int sample_style;
+
+    /* 呼吸时间设置 */
+    unsigned int inhale_time;
+    unsigned int inhale_wait_time;
+    unsigned int exhale_time;
+    unsigned int exhale_wait_time;
+    unsigned int hale_count;
+
     QString data_file_path;
 } SYSTEM_PARA_SET;
 
@@ -87,6 +95,7 @@ enum BUTTON_MODE{
     CLOSE_BUTTON,      //
 
     CLEAR_BUTTON,      //使能clear按钮
+    CLEAR_BUTTON_DISABLE,
     PAUSE_BUTTON,
     PLOT_BUTTON,
     DONE_BUTTON,

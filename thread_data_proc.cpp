@@ -163,16 +163,6 @@ void DataProcessThread::sample_timeout()
     {
         sample_timer->stop();
 
-        if(sample.sample_inform_flag)
-        {
-            /* 发送采样完成信号给逻辑线程 */
-            emit send_to_logic_sample_done();
-        }
-        else//此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能
-        {
-            emit send_to_GUI_enable_plot_pushbutton();
-        }
-
         qDebug("sample_count_real = %ld\n", plot_info.sample_count_real);
 
         /* 将内存空间的数据保存到文件 */
@@ -199,5 +189,15 @@ void DataProcessThread::sample_timeout()
         fclose(fp);
         fp = NULL;
         filename = NULL;
+
+        if(sample.sample_inform_flag)
+        {
+            /* 发送采样完成信号给逻辑线程 */
+            emit send_to_logic_sample_done();
+        }
+        else//此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能
+        {
+            emit send_to_GUI_enable_plot_pushbutton();
+        }
     }
 }

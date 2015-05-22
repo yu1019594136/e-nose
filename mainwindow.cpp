@@ -321,6 +321,14 @@ void MainWindow::recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_but
         ui->pushButton_done->setEnabled(true);
         qDebug() << "clear pause plot done pushbutton enabled" << endl;
     }
+//    else if(user_button_enable_para.mode == CLEAR_BUTTON_DISABLE)
+//    {
+//        ui->pushButton_clear_2->setEnabled(false);
+//        ui->pushButton_pause->setEnabled(false);
+//        ui->pushButton_plot->setEnabled(false);
+//        ui->pushButton_done->setEnabled(false);
+//        qDebug() << "clear pause plot done pushbutton disabled" << endl;
+//    }
     else if(user_button_enable_para.mode == PLOT_BUTTON)
     {
         ui->pushButton_plot->setEnabled(false);
@@ -363,6 +371,13 @@ void MainWindow::on_pushButton_al_set_clicked()
     system_para_set.evapor_clear_time = ui->set_evapor_clear->value();
     system_para_set.reac_clear_time = ui->set_reac_clear->value();
     system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
+
+    /* 呼吸时间设 */
+    system_para_set.inhale_time = 0;
+    system_para_set.inhale_wait_time = 0;
+    system_para_set.exhale_time = 0;
+    system_para_set.exhale_wait_time = 0;
+    system_para_set.hale_count = 0;
 
     emit send_to_logic_system_para_set(system_para_set);
 }

@@ -16,15 +16,6 @@ float sum_error = 0.0;          //偏差累加和
 
 float uk = 0.0;         //u[k]
 
-//THERMOSTATIC Thermostatic_room_temp_35;// 0   室温恒温到35摄氏度的相关参数,下同
-//THERMOSTATIC Thermostatic_35_45;//        1   35摄氏度恒温到45摄氏度的相关参数,下同
-//THERMOSTATIC Thermostatic_35_50;          2
-//THERMOSTATIC Thermostatic_35_55;          3
-//THERMOSTATIC Thermostatic_35_60;          4
-//THERMOSTATIC Thermostatic_35_65;          5
-//THERMOSTATIC Thermostatic_35_70;          6
-//THERMOSTATIC Thermostatic_35_75;          7
-
 THERMOSTATIC Thermostatic[8];
 
 void pid_Init(void)
@@ -41,8 +32,8 @@ void pid_Init(void)
     Thermostatic[0].borderline[0] = 4000000;
     Thermostatic[0].borderline[1] = 4000000;
     Thermostatic[0].borderline[2] = 4000000;
-    Thermostatic[0].borderline[3] = 1000000;
-    Thermostatic[0].borderline[4] = 500000;
+    Thermostatic[0].borderline[3] = 2000000;//1000000
+    Thermostatic[0].borderline[4] = 800000;//500000
 
     Thermostatic[1].preset_temp = 45.0;
     Thermostatic[1].borderline[0] = 800000;

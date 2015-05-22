@@ -520,7 +520,7 @@
        <number>5</number>
       </property>
       <property name="value">
-       <number>45</number>
+       <number>65</number>
       </property>
      </widget>
      <widget class="QLabel" name="label">
@@ -564,7 +564,7 @@
        <number>5</number>
       </property>
       <property name="value">
-       <number>50</number>
+       <number>90</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_clear">
@@ -595,7 +595,7 @@
        <number>30</number>
       </property>
       <property name="value">
-       <number>300</number>
+       <number>240</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_sample_time">
@@ -626,7 +626,7 @@
        <number>10</number>
       </property>
       <property name="value">
-       <number>180</number>
+       <number>60</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_time">
@@ -657,7 +657,7 @@
        <number>10</number>
       </property>
       <property name="value">
-       <number>120</number>
+       <number>60</number>
       </property>
      </widget>
      <widget class="QLabel" name="label_2">
@@ -746,7 +746,7 @@
        <number>30</number>
       </property>
       <property name="value">
-       <number>300</number>
+       <number>240</number>
       </property>
      </widget>
      <widget class="QRadioButton" name="radioButton_single">
