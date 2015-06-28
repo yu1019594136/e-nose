@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 3.1.1, 2015-05-22T09:05:59. -->
+<!-- Written by QtCreator 3.1.1, 2015-06-29T00:34:06. -->
 <qtcreator>
  <data>
   <variable>ProjectExplorer.Project.ActiveTarget</variable>
@@ -204,8 +204,8 @@
        <value type="QString">/home/zhouyu/qt_workspace/build-e-nose-Beaglebone_Black-Debug/e-nose</value>
       </valuelist>
       <valuelist type="QVariantList" key="Qt4ProjectManager.MaemoRunConfiguration.LastDeployedHosts">
-       <value type="QString">192.168.1.103</value>
        <value type="QString">192.168.1.102</value>
+       <value type="QString">192.168.1.103</value>
       </valuelist>
       <valuelist type="QVariantList" key="Qt4ProjectManager.MaemoRunConfiguration.LastDeployedRemotePaths">
        <value type="QString">/root/qt_program</value>
@@ -216,8 +216,8 @@
        <value type="QString"></value>
       </valuelist>
       <valuelist type="QVariantList" key="Qt4ProjectManager.MaemoRunConfiguration.LastDeployedTimes">
-       <value type="QDateTime">2015-05-21T21:10:05</value>
        <value type="QDateTime">2015-05-09T23:20:37</value>
+       <value type="QDateTime">2015-06-28T09:30:12</value>
       </valuelist>
       <value type="bool" key="RemoteLinux.GenericDirectUploadStep.IgnoreMissingFiles">false</value>
       <value type="bool" key="RemoteLinux.GenericDirectUploadStep.Incremental">true</value>
@@ -272,7 +272,7 @@
     <value type="int" key="PE.EnvironmentAspect.Base">1</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.DefaultDisplayName">e-nose (在远端设备上)</value>
-    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName">e-nose (在远端设备上)2</value>
+    <value type="QString" key="ProjectExplorer.ProjectConfiguration.DisplayName"></value>
     <value type="QString" key="ProjectExplorer.ProjectConfiguration.Id">RemoteLinuxRunConfiguration:/home/zhouyu/qt_workspace/e-nose/e-nose.pro</value>
     <valuelist type="QVariantList" key="Qt4ProjectManager.MaemoRunConfiguration.Arguments"/>
     <value type="QString" key="Qt4ProjectManager.MaemoRunConfiguration.ProFile">e-nose.pro</value>

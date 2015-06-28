@@ -7,6 +7,8 @@
 #include "common.h"
 #include "qcommon.h"
 
+#define MAX_SAMPLE_COUNT 4000000
+
 /*********************逻辑控制线程*****************************/
 class LogicControlThread : public QThread
 {
@@ -45,18 +47,21 @@ private:
     unsigned int hale_state;
     unsigned int hale_count;
     bool hale_state_change;
+    int pwm_state;              //记录当前采样次数，同时用于参数数组标记
 
     /* 清洗气室标志 */
     unsigned int clear_state;
     bool clear_state_change;
 
+    /* 记录参数 */
+
+
     /* 每一次呼吸4个阶段的持续时间以及气泵转速 */
-    int pwm_duty[3];
-    int inhale_time[3];
-    int inhale_wait_time[3];
-    int exhale_time[3];
-    int exhale_wait_time[3];
-    int pwm_state;
+//    int pwm_duty[3];
+//    int inhale_time[3];
+//    int inhale_wait_time[3];
+//    int exhale_time[3];
+//    int exhale_wait_time[3];
 
 signals:
     /* 发送给硬件控制线程的恒温信号 */

@@ -36,23 +36,23 @@ typedef struct{
 } GUI_REALTIME_INFO;
 
 typedef struct{
-    float preset_temp;//预设温度
-    int hold_time;//蒸发时间
-    int pump_up_time;//打气时间
-    float sample_freq;//每个通道的采样频率
-    int sample_time;//每个通道的时间长度
-    int evapor_clear_time;//蒸发室清洗时间
-    int reac_clear_time;//反应室清洗时间
+    float preset_temp;      //预设温度
+    int hold_time;          //蒸发时间
+    int sample_size;       //样本量
+    float sample_freq;      //每个通道的采样频率
+    int sample_time;        //每个通道的时间长度
+    int evapor_clear_time;  //蒸发室清洗时间
+    int reac_clear_time;    //反应室清洗时间
     int sample_style;
+    QString liquor_brand;   //白酒品牌
 
     /* 呼吸时间设置 */
-    unsigned int inhale_time;
-    unsigned int inhale_wait_time;
-    unsigned int exhale_time;
-    unsigned int exhale_wait_time;
+    unsigned int pwm_duty[3];
+    unsigned int inhale_time[3];
+    unsigned int inhale_wait_time[3];
+    unsigned int exhale_time[3];
+    unsigned int exhale_wait_time[3];
     unsigned int hale_count;
-
-    QString data_file_path;
 } SYSTEM_PARA_SET;
 
 enum SAMPLE_STYLE{

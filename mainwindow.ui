@@ -555,16 +555,16 @@
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
       <property name="minimum">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="maximum">
-       <number>100</number>
+       <number>5000</number>
       </property>
       <property name="singleStep">
-       <number>5</number>
+       <number>10</number>
       </property>
       <property name="value">
-       <number>90</number>
+       <number>1000</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_clear">
@@ -595,7 +595,7 @@
        <number>30</number>
       </property>
       <property name="value">
-       <number>240</number>
+       <number>180</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_sample_time">
@@ -617,16 +617,16 @@
        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
       </property>
       <property name="minimum">
-       <number>0</number>
+       <number>1</number>
       </property>
       <property name="maximum">
-       <number>99999</number>
+       <number>999999</number>
       </property>
       <property name="singleStep">
        <number>10</number>
       </property>
       <property name="value">
-       <number>60</number>
+       <number>40</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_time">
@@ -746,7 +746,7 @@
        <number>30</number>
       </property>
       <property name="value">
-       <number>240</number>
+       <number>180</number>
       </property>
      </widget>
      <widget class="QRadioButton" name="radioButton_single">
@@ -804,7 +804,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>data file path:</string>
+       <string>liquor brand:</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_clear_current">
@@ -843,7 +843,7 @@
        </rect>
       </property>
       <property name="text">
-       <string>pump up time:</string>
+       <string>sample size</string>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_pump_up_time">
@@ -868,7 +868,244 @@
        <number>99999</number>
       </property>
       <property name="value">
-       <number>10</number>
+       <number>4</number>
+      </property>
+     </widget>
+    </widget>
+    <widget class="QWidget" name="tab_4">
+     <attribute name="title">
+      <string>para hale</string>
+     </attribute>
+     <widget class="QSpinBox" name="spinBox">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>70</y>
+        <width>61</width>
+        <height>27</height>
+       </rect>
+      </property>
+      <property name="value">
+       <number>2</number>
+      </property>
+     </widget>
+     <widget class="QWidget" name="gridLayoutWidget">
+      <property name="geometry">
+       <rect>
+        <x>80</x>
+        <y>50</y>
+        <width>391</width>
+        <height>161</height>
+       </rect>
+      </property>
+      <layout class="QGridLayout" name="gridLayout">
+       <item row="1" column="2">
+        <widget class="QSpinBox" name="spinBox_5">
+         <property name="value">
+          <number>6</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="3">
+        <widget class="QSpinBox" name="spinBox_12">
+         <property name="value">
+          <number>4</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="4">
+        <widget class="QSpinBox" name="spinBox_13">
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="2">
+        <widget class="QSpinBox" name="spinBox_11">
+         <property name="value">
+          <number>6</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="4">
+        <widget class="QSpinBox" name="spinBox_9">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QSpinBox" name="spinBox_2">
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QSpinBox" name="spinBox_8">
+         <property name="singleStep">
+          <number>1</number>
+         </property>
+         <property name="value">
+          <number>4</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QSpinBox" name="spinBox_10">
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="0">
+        <widget class="QSpinBox" name="spinBox_6">
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="4">
+        <widget class="QSpinBox" name="spinBox_3">
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="2">
+        <widget class="QSpinBox" name="spinBox_7">
+         <property name="value">
+          <number>6</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="3">
+        <widget class="QSpinBox" name="spinBox_4">
+         <property name="value">
+          <number>4</number>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="1">
+        <widget class="QSpinBox" name="spinBox_14">
+         <property name="maximum">
+          <number>125000</number>
+         </property>
+         <property name="singleStep">
+          <number>5000</number>
+         </property>
+         <property name="value">
+          <number>50000</number>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="1">
+        <widget class="QSpinBox" name="spinBox_15">
+         <property name="maximum">
+          <number>125000</number>
+         </property>
+         <property name="singleStep">
+          <number>5000</number>
+         </property>
+         <property name="value">
+          <number>80000</number>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="1">
+        <widget class="QSpinBox" name="spinBox_16">
+         <property name="maximum">
+          <number>125000</number>
+         </property>
+         <property name="singleStep">
+          <number>5000</number>
+         </property>
+         <property name="value">
+          <number>125000</number>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+     <widget class="QLabel" name="label_10">
+      <property name="geometry">
+       <rect>
+        <x>240</x>
+        <y>20</y>
+        <width>74</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>inhale wait</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_12">
+      <property name="geometry">
+       <rect>
+        <x>400</x>
+        <y>20</y>
+        <width>82</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>exhale wait</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_11">
+      <property name="geometry">
+       <rect>
+        <x>330</x>
+        <y>20</y>
+        <width>51</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>exhale</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_9">
+      <property name="geometry">
+       <rect>
+        <x>100</x>
+        <y>20</y>
+        <width>61</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>inhale</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_13">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>20</y>
+        <width>81</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>hale count</string>
+      </property>
+     </widget>
+     <widget class="QLabel" name="label_14">
+      <property name="geometry">
+       <rect>
+        <x>160</x>
+        <y>20</y>
+        <width>71</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>pwm duty</string>
       </property>
      </widget>
     </widget>
@@ -1097,7 +1334,7 @@
      <enum>Qt::NoFocus</enum>
     </property>
     <property name="text">
-     <string>TextLabel</string>
+     <string>Date and Time</string>
     </property>
    </widget>
    <widget class="QLabel" name="label_8">

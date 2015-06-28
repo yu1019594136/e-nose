@@ -16,87 +16,86 @@
 #include <error.h>
 #include "tlc1543.h"
 #include "HW_interface.h"
+/*-----------------pru-----------------*/
+#include <prussdrv.h>
+#include <pruss_intc_mapping.h>
 
-unsigned int i;
-unsigned int j;
-volatile long sample_count;//按照采样时间和采样频率计算出的采样次数
+#include <ctype.h>
+#include <termios.h>
+#include <sys/mman.h>
 
-u_int16_t tlc1543_txbuf[1];	//SPI通信发送缓冲区
-u_int16_t tlc1543_rxbuf[1];	//SPI通信接收缓冲区
-u_int16_t channel;		//要转换的通道号，取值0x00-0x0D，
+/*-----------------pru-----------------*/
+/* DDR地址 */
+unsigned int addr;
+unsigned int dataSize;
 
-u_int16_t **p_data;//创建一个无符号整型的二维数组指针，该全局变量用于数据处理线程和GUI线程之间传递数据
+/* 采样配置相关数据 */
+unsigned int spiData[13];
+unsigned int timerData[2];
 
 /*********************数据处理线程*****************************/
 DataProcessThread::DataProcessThread(QObject *parent) :
     QThread(parent)
 {
     stopped = false;
-    sample_count = 0;
-    sample_flag = false;
 
     plot_info.width = 1000;
     plot_info.height = 65536;
     plot_info.sample_count_real = 0;
 
     filename = NULL;
-    fp = NULL;
-    p_data = NULL;
+    sample_flag = false;
 
-    tlc1543_txbuf[0] = 0;	//SPI通信发送缓冲区
-    tlc1543_rxbuf[0] = 0;	//SPI通信接收缓冲区
-    channel = 0;		//要转换的通道号，取值0x00-0x0D，
-    i = 0;
-    j = 0;
-
-    sample_timer = new QTimer();
-    connect(sample_timer, SIGNAL(timeout()), this, SLOT(sample_timeout()));
 }
 
 void DataProcessThread::run()
 {
     msleep(100);
 
+    int event_num = 0;
+
+    PRU_init_loadcode();
+
     while (!stopped)
     {
-        while(sample_count)
+        if(sample_flag)//如果采样已经开始
         {
-            for(i = 1; i < 10; i++)
+            event_num = prussdrv_pru_wait_event (PRU_EVTOUT_0);//等待采样结束, 阻塞函数
+            qDebug("ADC PRU0 program completed, event number %d.\n", event_num);
+
+            if(prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT) == 0)
+                qDebug("prussdrv_pru_clear_event success\n");
+            else
+                qDebug("prussdrv_pru_clear_event failed!\n");
+
+            if(prussdrv_pru_disable(ADC_PRU_NUM) == 0)
+                 printf("The ADCPRU disable succeed!\n");
+            if(prussdrv_pru_disable(CLK_PRU_NUM) == 0)
+                 printf("The CLKPRU disable succeed!\n ");
+
+            /* 保存数据到文件 */            
+            if(save_data_to_file(filename, spiData[1] / 2) == SUCCESS)
+                qDebug("Data is saved in %s.\n", filename);
+            else
+                qDebug("Data save error!\n");
+
+            if(sample.sample_inform_flag)
             {
-                channel = i;
-                tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-                tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-                usleep(WAIT_CONVERSION);
-
-                p_data[plot_info.sample_count_real][i-1] = tlc1543_rxbuf[0];//读取缓冲区数据到内存空间
-
-                //fprintf(fp, "%d\t", tlc1543_rxbuf[0]);
-                //fprintf(fp, "%.3f\t", (tlc1543_rxbuf[0] * 5.02) / 65536);
-                //qDebug("%.3f\t", (tlc1543_rxbuf[0] * 5.02) / 65536;
+                /* 发送采样完成信号给逻辑线程 */
+                emit send_to_logic_sample_done();
             }
-            channel = 0;
-            tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-            tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-            usleep(WAIT_CONVERSION);
+            else//此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能
+            {
+                emit send_to_GUI_enable_plot_pushbutton();
+            }
 
-            p_data[plot_info.sample_count_real][9] = tlc1543_rxbuf[0];//读取缓冲区数据到内存空间
-
-            //fprintf(fp, "%d\n", tlc1543_rxbuf[0]);
-            //fprintf(fp, "%.3f\n", (tlc1543_rxbuf[0] * 5.02) / 65536);
-            //qDebug("%.3f\n", (tlc1543_rxbuf[0] * 5.02) / 65536);
-
-            plot_info.width = 800;
-            plot_info.height = 65536;
-            ++plot_info.sample_count_real;
-
-            /* 通知GUI线程根据全局变量sample_count_real进行数据绘图 */
-            emit send_to_PlotWidget_plotdata(plot_info);
-
-            while(!sample_flag);
             sample_flag = false;
         }
 
     }
+    /* 线程退出前关闭PRU */
+    prussdrv_exit ();
+
     stopped = false;
     qDebug("DataProcessThread done!\n");
 }
@@ -108,96 +107,176 @@ void DataProcessThread::stop()
 
 void DataProcessThread::recei_fro_logic_sample(SAMPLE sample_para)
 {
-    int temp_time = 0;
-
     QDateTime datetime = QDateTime::currentDateTime();
 
-    sample.sample_freq = sample_para.sample_freq;
+    sample.sample_freq = sample_para.sample_freq * 10;//10个通道的频率
     sample.sample_time = sample_para.sample_time;
-    sample.filename_prefix = QString("/root/qt_program/") + sample_para.filename_prefix + datetime.toString("_yyyy.MM.dd-hh_mm_ss") + ".txt";
+    sample.filename_prefix = QString("/root/qt_program/") + datetime.toString("yyyy.MM.dd-hh_mm_ss_")+ sample_para.filename_prefix  + ".txt";
     sample.sample_inform_flag = sample_para.sample_inform_flag;
 
-    QByteArray ba = sample.filename_prefix.toLatin1();
+    ba = sample.filename_prefix.toLatin1();
     filename = ba.data();
 
-    /* 创建文件保存数据 */
-    if((fp=fopen(filename,"w"))==NULL)
-    {
-        qDebug("cannot open file\n");
-        //exit(0);
-    }
+    /* 配置采样频率 */
+    timerData[0] = (5 * 10000000) / sample.sample_freq - 3;
 
-    /* 第一次采集的数据不准确丢弃 */
-    channel = 0;
-    tlc1543_txbuf[0] = (channel<<12)| 0x0c00;//写入要转换的通道号,16位精度(0x0c00),12位精度(0x0000/0x0800),8位精度(0x0400)
-    tlc1543_Transfer(tlc1543_txbuf, tlc1543_rxbuf, 2);//数据交换后得到0通道数据
-    usleep(WAIT_CONVERSION);
+    /* 配置采样次数(实际上是指定存储空间大小，单位字节，采样在没有剩余空间时自动结束) */
+    spiData[1] = sample.sample_freq * sample.sample_time * 2;
 
-    sample_flag = false;
-    plot_info.sample_count_real = 0;
-    /* 计算总的定时次数以及定时时间, 每次定时都会在定时事件代码中采集所有通道 */
-    sample_count = sample.sample_time * sample.sample_freq;
-    temp_time = 1000.0 / sample.sample_freq;
+    qDebug("The expect sample rate:\t%f\tHz (each channel)\n", sample_para.sample_freq);
+    qDebug("The real sample rate:  \t%f\tHz (each channel)\n", (5.0 * 1000000) / (timerData[0] + 3));
+    qDebug("memory size in PRU code: spiData[1] = %d\n",spiData[1]);
+    qDebug("sample delay in PRU code: timerData[0] = %d\n",timerData[0]);
 
-    /* 分配二维内存空间保存数据，一共sample_count个一维数组，每个一维数组长度10,存储10个电压值 */
-    p_data = (u_int16_t **)malloc(sizeof(u_int16_t *) * sample_count);
-    for(i = 0; i< sample_count; i++)
-    {
-        p_data[i] = (u_int16_t *)malloc(sizeof(u_int16_t) * 10);
-        memset(p_data[i], 0, sizeof(u_int16_t) * 10);//将分配的内存空间初始化为0
-    }
+    /* 写入配置数据到DATA RAM */
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, spiData, sizeof(spiData));  // spi config
+    prussdrv_pru_write_memory(PRUSS0_PRU1_DATARAM, 0, timerData, sizeof(timerData)); // sample config
 
-    qDebug("sample_count = %ld\n",sample_count);
-    qDebug("temp_time = %d ms\n",temp_time);
+    /* 使能PRU运行采样程序 */
+    if(prussdrv_pru_enable(ADC_PRU_NUM) == 0)
+         qDebug("The ADCPRU enable succeed!\n");
+    if(prussdrv_pru_enable(CLK_PRU_NUM) == 0)
+         qDebug("The CLKPRU enable succeed!\n ");
 
-    sample_timer->start(temp_time);
+    sample_flag = true;
+    qDebug("sample begins!\n");
 }
 
-void DataProcessThread::sample_timeout()
+// Short function to load a single unsigned int from a sysfs entry
+unsigned int readFileValue(char filename[])
 {
-    sample_flag = true;
+   FILE* fp;
+   unsigned int value = 0;
+   fp = fopen(filename, "rt");
+   fscanf(fp, "%x", &value);
+   fclose(fp);
+   return value;
+}
 
-    sample_count--;
+/* PRU初始化，下载PRU代码到Instruction data ram中 */
+void PRU_init_loadcode()
+{
+    addr = readFileValue(MMAP1_LOC "addr");
+    dataSize = readFileValue(MMAP1_LOC "size");
 
-    if(sample_count == 0)
-    {
-        sample_timer->stop();
+    // Initialize structure used by prussdrv_pruintc_intc
+    // PRUSS_INTC_INITDATA is found in pruss_intc_mapping.h
+    tpruss_intc_initdata pruss_intc_initdata = PRUSS_INTC_INITDATA;
 
-        qDebug("sample_count_real = %ld\n", plot_info.sample_count_real);
+    // Read in the location and address of the shared memory. This value changes
+    // each time a new block of memory is allocated.
+    timerData[0] = FREQ_50kHz;
+    timerData[1] = RUNNING;
+    qDebug("The PRU clock state is set as period: %d (0x%x) and state: %d\n", timerData[0], timerData[0], timerData[1]);
+    unsigned int PRU_data_addr = readFileValue(MMAP0_LOC "addr");
+    qDebug("-> the PRUClock memory is mapped at the base address: %x\n", (PRU_data_addr + 0x2000));
+    qDebug("-> the PRUClock on/off state is mapped at address: %x\n", (PRU_data_addr + 0x10000));
 
-        /* 将内存空间的数据保存到文件 */
-        for(i = 0; i < plot_info.sample_count_real; i++)
-        {
-            for(j = 0; j < 9; j++)
-            {
-                fprintf(fp, "%d\t", p_data[i][j]);
-            }
-            fprintf(fp, "%d\n", p_data[i][9]);
-        }
+    // data for PRU0 based on the TLC2543 datasheet
+    spiData[0] = addr;//readFileValue(MMAP1_LOC "addr")
+    spiData[1] = 20;//单位字节，2个字节存储一次采样数据, 采样10次作为测试，主要是为了提前将PRU代码写入Instruction data ram中
+    spiData[2] = CHANNEL_WSP2110;
+    spiData[3] = CHANNEL_5521;//5521
+    spiData[4] = CHANNEL_TGS2611;//TGS2611
+    spiData[5] = CHANNEL_TGS2620;
+    spiData[6] = CHANNEL_5121;
+    spiData[7] = CHANNEL_5526;
+    spiData[8] = CHANNEL_5524;
+    spiData[9] = CHANNEL_TGS880;
+    spiData[10] = CHANNEL_MP502;
+    spiData[11] = CHANNEL_TGS2602;
+    spiData[12] = CHANNEL_STOP;
 
-        qDebug() <<"timer stop and data saved in filepath:" << sample.filename_prefix << endl;
+    qDebug("The DDR External Memory pool has location: 0x%x and size: 0x%x bytes\n", addr, dataSize);
+    qDebug("-> this space has capacity to store %d 16-bit samples (max)\n", dataSize / 2);
 
-        /* 释放空间，清空相关指针变量 */
-        plot_info.sample_count_real = 0;
+    qDebug("Sending the SPI Control Data: 0x%x\n", spiData[2]);
+    qDebug("This is the test for sampling and load PRU code into the instruction ram.\n");
 
-        /* 数据空间p_data被销毁，此时如果再打开绘图选项卡会激活绘图事件函数,造成绘图函数访问不存在的数据空间，
-         * 所以完成一次采样和绘图后应该及时关闭绘图代码 */
-        emit send_to_PlotWidget_plotdata(plot_info);
+    // Allocate and initialize memory
+    prussdrv_init ();
+    prussdrv_open (PRU_EVTOUT_0);
+    // Map the PRU's interrupts
+    prussdrv_pruintc_init(&pruss_intc_initdata);
 
-        free(p_data);
-        p_data = NULL;
-        fclose(fp);
-        fp = NULL;
-        filename = NULL;
+    // Write the address and size into PRU0 Data RAM0. You can edit the value to
+    // PRUSS0_PRU1_DATARAM if you wish to write to PRU1
+    prussdrv_pru_write_memory(PRUSS0_PRU0_DATARAM, 0, spiData, sizeof(spiData));  // spi code
+    prussdrv_pru_write_memory(PRUSS0_PRU1_DATARAM, 0, timerData, sizeof(timerData)); // sample clock
 
-        if(sample.sample_inform_flag)
-        {
-            /* 发送采样完成信号给逻辑线程 */
-            emit send_to_logic_sample_done();
-        }
-        else//此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能
-        {
-            emit send_to_GUI_enable_plot_pushbutton();
-        }
-    }
+    // Load and execute the PRU program on the PRU
+    prussdrv_exec_program (ADC_PRU_NUM, "./PRUADC.bin");
+    prussdrv_exec_program (CLK_PRU_NUM, "./PRUClock.bin");
+    qDebug("EBBClock PRU1 program now running (%d )\n", timerData[0]);
+
+    // Wait for event completion from PRU, returns the PRU_EVTOUT_0 number
+    int n = prussdrv_pru_wait_event (PRU_EVTOUT_0);
+    qDebug("EBBADC PRU0 program test completed, event number %d.\n", n);
+
+    if(prussdrv_pru_clear_event (PRU_EVTOUT_0, PRU0_ARM_INTERRUPT) == 0)
+         qDebug("prussdrv_pru_clear_event success\n");
+    else
+        qDebug("prussdrv_pru_clear_event failed!\n");
+
+    // Disable PRU
+    prussdrv_pru_disable(ADC_PRU_NUM);
+    prussdrv_pru_disable(CLK_PRU_NUM);
+
+    /* 测试不需要保存数据 */
+}
+
+/* 保存数据到文件 */
+int save_data_to_file(char * filename, unsigned int numberOutputSamples)
+{
+    /*--------------------------保存数据相关------------------------------------------*/
+     int mmap_fd;
+     FILE *fp_data_file;
+     unsigned int i = 0;
+     void *map_base, *virt_addr;
+     unsigned long read_result;
+     unsigned int num = 0;
+     off_t target = addr;
+
+    /*------------------------------------------------------------------------------------*/
+
+     /*--------------------------保存数据相关------------------------------------------*/
+  if((mmap_fd = open("/dev/mem", O_RDWR | O_SYNC)) == -1)
+  {
+      qDebug("Failed to open memory!");
+      return ERROR;
+  }
+
+   map_base = mmap(0, MAP_SIZE, PROT_READ | PROT_WRITE, MAP_SHARED, mmap_fd, target & ~MAP_MASK);
+   if(map_base == (void *) -1) {
+      qDebug("Failed to map base address");
+      return ERROR;
+   }
+   //fflush(stdout);
+
+   fp_data_file = fopen(filename, "w");
+
+   for(i = 0; i < numberOutputSamples; i++)
+   {
+       virt_addr = map_base + (target & MAP_MASK);
+       read_result = *((uint16_t *) virt_addr);
+       num++;
+       if(num % 10 == 0)
+           fprintf(fp_data_file, "%ld\n", read_result);
+       else
+           fprintf(fp_data_file, "%ld\t", read_result);
+
+       target+=2;// 2 bytes per sample
+   }
+   //fflush(stdout);
+
+   if(munmap(map_base, MAP_SIZE) == -1)
+   {
+      qDebug("Failed to unmap memory");
+      return ERROR;
+   }
+   close(mmap_fd);
+
+   fclose(fp_data_file);
+
+   return SUCCESS;
 }

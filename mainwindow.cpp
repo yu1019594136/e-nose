@@ -44,7 +44,6 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
             temp = item_file.readLine();
             temp.remove(QChar('\n'));
             q_str_list.append(temp);
-            //qDebug() << "line = " << temp << endl;
         }
         ui->comboBox_data_filepath->addItems(q_str_list);
         item_file.close();
@@ -133,7 +132,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 实例化一个定时器并启动 */
     timer = new QTimer(this);
     connect(timer, SIGNAL(timeout()), this, SLOT(timerUpdate()));
-    timer->start(1000);//一分钟更新一次时间
+    timer->start(1000 * 60);//一分钟更新一次时间
 
     /* 显示界面各个标签 */
     ui->logo->setText("Electronic Nose");
@@ -147,6 +146,13 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     ui->M3->setText("M3 status:");
     ui->M4->setText("M4 status:");
     ui->preset_temp->setText("preset temp:");
+
+    ui->label_13->setText("hale count");
+    ui->label_9->setText("inhale");
+    ui->label_14->setText("pwm duty");
+    ui->label_10->setText("inhale wait");
+    ui->label_11->setText("exhale");
+    ui->label_12->setText("exhale wait");
 
     /* 显示系统气泵、电磁阀、加热带的初始状态 */
     ui->pump_speed_value->setText("0.0/125.0 us");
@@ -359,7 +365,7 @@ void MainWindow::on_pushButton_al_set_clicked()
 
     system_para_set.preset_temp = ui->set_evapor_temp->value();
     system_para_set.hold_time = ui->set_evapor_time->value();
-    system_para_set.pump_up_time = ui->set_pump_up_time->value();
+    system_para_set.sample_size = ui->set_pump_up_time->value();
     system_para_set.sample_freq = ui->set_sample_rate->value();
     system_para_set.sample_time = ui->set_sample_time->value();
 
@@ -370,14 +376,30 @@ void MainWindow::on_pushButton_al_set_clicked()
 
     system_para_set.evapor_clear_time = ui->set_evapor_clear->value();
     system_para_set.reac_clear_time = ui->set_reac_clear->value();
-    system_para_set.data_file_path = ui->comboBox_data_filepath->currentText();
+    system_para_set.liquor_brand = ui->comboBox_data_filepath->currentText();
 
     /* 呼吸时间设 */
-    system_para_set.inhale_time = 0;
-    system_para_set.inhale_wait_time = 0;
-    system_para_set.exhale_time = 0;
-    system_para_set.exhale_wait_time = 0;
-    system_para_set.hale_count = 0;
+    system_para_set.pwm_duty[0] = ui->spinBox_14->value();
+    system_para_set.pwm_duty[1] = ui->spinBox_15->value();
+    system_para_set.pwm_duty[2] = ui->spinBox_16->value();
+
+    system_para_set.inhale_time[0] = ui->spinBox_2->value();;
+    system_para_set.inhale_time[1] = ui->spinBox_6->value();;
+    system_para_set.inhale_time[2] = ui->spinBox_10->value();;
+
+    system_para_set.inhale_wait_time[0] = ui->spinBox_5->value();;
+    system_para_set.inhale_wait_time[1] = ui->spinBox_7->value();;
+    system_para_set.inhale_wait_time[2] = ui->spinBox_11->value();;
+
+    system_para_set.exhale_time[0] = ui->spinBox_4->value();;
+    system_para_set.exhale_time[1] = ui->spinBox_8->value();;
+    system_para_set.exhale_time[2] = ui->spinBox_12->value();;
+
+    system_para_set.exhale_wait_time[0] = ui->spinBox_3->value();;
+    system_para_set.exhale_wait_time[1] = ui->spinBox_9->value();;
+    system_para_set.exhale_wait_time[2] = ui->spinBox_13->value();;
+
+    system_para_set.hale_count = ui->spinBox->value();;
 
     emit send_to_logic_system_para_set(system_para_set);
 }

@@ -1,6 +1,7 @@
 #include "thread_logic.h"
 #include <string.h>
-#include "QDebug"
+#include <QDebug>
+#include <QDateTime>
 
 /*********************逻辑控制线程*****************************/
 LogicControlThread::LogicControlThread(QObject *parent) :
@@ -46,28 +47,8 @@ LogicControlThread::LogicControlThread(QObject *parent) :
     clear_state = 0;
     clear_state_change = false;
 
-    /* 每一次呼吸4个阶段的持续时间以及气泵转速 */
-    pwm_duty[0] = 60000;
-    pwm_duty[1] = 55000;
-    pwm_duty[2] = 125000;
-
-    inhale_time[0] = 10;
-    inhale_time[1] = 1;
-    inhale_time[2] = 1;
-
-    inhale_wait_time[0] = 20;
-    inhale_wait_time[1] = 6;
-    inhale_wait_time[2] = 6;
-
-    exhale_time[0] = 0;
-    exhale_time[1] = 2;
-    exhale_time[2] = 2;
-
-    exhale_wait_time[0] = 0;
-    exhale_wait_time[1] = 2;
-    exhale_wait_time[2] = 2;
-
     pwm_state = 0;
+
 }
 
 void LogicControlThread::run()
@@ -199,7 +180,7 @@ void LogicControlThread::run()
 
                 /* 通知GUI线程使能set按钮5s */
                 user_button_enable.mode = SET_BUTTON;
-                user_button_enable.enable_time = 5;//单位s, 5s
+                user_button_enable.enable_time = 10;//单位s, 5s
                 emit send_to_GUI_user_buttton_enable(user_button_enable);
 
                 operation_flag.thermo_flag = AL_SET;
@@ -301,18 +282,17 @@ void LogicControlThread::run()
                 /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
                 sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
-                sample_para.filename_prefix = system_para_set.data_file_path;//数据文件路径以及文件名前缀,
+                sample_para.filename_prefix = system_para_set.liquor_brand;//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = true;
                 emit send_to_dataproc_sample(sample_para);
 
-                /* 先采集5s空气中的响应 */
-                msleep(5000);
+                /* 先采集3s空气中的响应 */
+                //msleep(3000);
 
                 /* 读取呼吸次数, 进入状态1 */
                 hale_count = system_para_set.hale_count;
                 hale_state_change = true;
                 hale_state = 0;
-
                 pwm_state = 0;
 
                 qDebug() << "sample start, and thermo stop" << endl;
@@ -328,28 +308,28 @@ void LogicControlThread::run()
                     hale_state_change = false;//保证本段代码只执行一次
 
                     /* 参数检查，四个状态参数中，如果需要跳过某个状态，那么将该参数设置为0即可 */
-                    if(hale_state == 1 && inhale_time[pwm_state] == 0)//跳过状态1
+                    if(hale_state == 1 && system_para_set.inhale_time[pwm_state] == 0)//跳过状态1
                     {
                         hale_state = 2;
                         qDebug() << "jump from hale state 1 to hale state 2" << endl;
                     }
-                    if(hale_state == 2 && inhale_wait_time[pwm_state] == 0)//跳过状态2
+                    if(hale_state == 2 && system_para_set.inhale_wait_time[pwm_state] == 0)//跳过状态2
                     {
                         hale_state = 3;
                         qDebug() << "jump from hale state 2 to hale state 3" << endl;
                     }
-                    if(hale_state == 3 && exhale_time[pwm_state] == 0)//跳过状态3
+                    if(hale_state == 3 && system_para_set.exhale_time[pwm_state] == 0)//跳过状态3
                     {
                         hale_state = 4;
                         qDebug() << "jump from hale state 3 to hale state 4" << endl;
                     }
-                    if(hale_state == 4 && exhale_wait_time[pwm_state] == 0)//跳过状态4
+                    if(hale_state == 4 && system_para_set.exhale_wait_time[pwm_state] == 0)//跳过状态4
                     {
                         hale_state = 5;
                         qDebug() << "jump from hale state 4 to hale state 5" << endl;
                     }
 
-                    if(hale_state == 1 && inhale_time[pwm_state] != 0)
+                    if(hale_state == 1 && system_para_set.inhale_time[pwm_state] != 0)
                     {
                         /* 打开采样气路, 吸入样本气体 */
                         magnetic_para.M1 = HIGH;
@@ -364,28 +344,28 @@ void LogicControlThread::run()
 
                         /* 吸入样本气体n秒钟 */
                         pump_para.pump_switch = HIGH;
-                        pump_para.pump_duty = pwm_duty[pwm_state];//全速运转,duty取值范围0-125000
+                        pump_para.pump_duty = system_para_set.pwm_duty[pwm_state];//全速运转,duty取值范围0-125000
                         pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
                         emit send_to_hard_pump(pump_para);
 
                         /* 打入样本气体到反应室后定时封闭反应室 */
-                        close_pump_and_reac_timer->start(inhale_time[pwm_state] * 1000);
-                        qDebug() << "reac_timer->start, inhale sample time" << inhale_time[pwm_state] << " s." << endl;
+                        close_pump_and_reac_timer->start(system_para_set.inhale_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, inhale sample time" << system_para_set.inhale_time[pwm_state] << " s." << endl;
 
                     }
-                    else if(hale_state == 2 && inhale_wait_time[pwm_state] != 0)
+                    else if(hale_state == 2 && system_para_set.inhale_wait_time[pwm_state] != 0)
                     {
                         /* 吸入样本气体后等待...... */
-                        close_pump_and_reac_timer->start(inhale_wait_time[pwm_state] * 1000);
-                        qDebug() << "reac_timer->start, inhale wait time" << inhale_wait_time[pwm_state] << " s." << endl;
+                        close_pump_and_reac_timer->start(system_para_set.inhale_wait_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, inhale wait time" << system_para_set.inhale_wait_time[pwm_state] << " s." << endl;
                     }
-                    else if(hale_state == 3 && exhale_time[pwm_state] != 0)
+                    else if(hale_state == 3 && system_para_set.exhale_time[pwm_state] != 0)
                     {
                         /* 打开清洗气路，做呼气动作 */
                         //magnetic_para.M1 = HIGH;
                         magnetic_para.M1 = LOW;
-                        magnetic_para.M2 = HIGH;
-                        //magnetic_para.M2 = LOW;
+                        //magnetic_para.M2 = HIGH;
+                        magnetic_para.M2 = LOW;
                         //magnetic_para.M3 = HIGH;
                         magnetic_para.M3 = LOW;
                         magnetic_para.M4 = HIGH;
@@ -399,14 +379,14 @@ void LogicControlThread::run()
                         emit send_to_hard_pump(pump_para);
 
                         /* 呼出反应室样本气体n秒 */
-                        close_pump_and_reac_timer->start(exhale_time[pwm_state] * 1000);
-                        qDebug() << "reac_timer->start, exhale time" << exhale_time[pwm_state] << " s." << endl;
+                        close_pump_and_reac_timer->start(system_para_set.exhale_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, exhale time" << system_para_set.exhale_time[pwm_state] << " s." << endl;
                     }
-                    else if(hale_state == 4 && exhale_wait_time[pwm_state] != 0)
+                    else if(hale_state == 4 && system_para_set.exhale_wait_time[pwm_state] != 0)
                     {
                         /* 呼出反应室样本气体n秒后，等待 */
-                        close_pump_and_reac_timer->start(exhale_wait_time[pwm_state] * 1000);
-                        qDebug() << "reac_timer->start, exhale wait time" << exhale_wait_time[pwm_state] << " s." << endl;
+                        close_pump_and_reac_timer->start(system_para_set.exhale_wait_time[pwm_state] * 1000);
+                        qDebug() << "reac_timer->start, exhale wait time" << system_para_set.exhale_wait_time[pwm_state] << " s." << endl;
                     }
                     else if(hale_state == 5)//一次呼吸结束
                     {
@@ -458,7 +438,7 @@ void LogicControlThread::run()
 
                 /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
-                sample_para.sample_time = system_para_set.evapor_clear_time / 2;//单位s, 每个通道的采样时间长度
+                sample_para.sample_time = system_para_set.evapor_clear_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = "clear_data";//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = false;
                 emit send_to_dataproc_sample(sample_para);
@@ -735,30 +715,87 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
 {
     system_para_set = system_para_set_info;
 
-    /* 呼吸时间设置 */
-    system_para_set.inhale_time = 1;
-    system_para_set.inhale_wait_time = 6;
-    system_para_set.exhale_time = 2;
-    system_para_set.exhale_wait_time = 2;
-    system_para_set.hale_count = 1;
-
     read_para_flag = true;
 
     qDebug() << "system_para_set.preset_temp = " << system_para_set.preset_temp << endl;
     qDebug() << "system_para_set.hold_time = " << system_para_set.hold_time << endl;
-    qDebug() << "system_para_set.pump_up_time = " << system_para_set.pump_up_time << endl;
+    qDebug() << "system_para_set.sample_size = " << system_para_set.sample_size << endl;
     qDebug() << "system_para_set.sample_freq = " << system_para_set.sample_freq << endl;
     qDebug() << "system_para_set.sample_time = " << system_para_set.sample_time << endl;
     qDebug() << "system_para_set.sample_style = " << system_para_set.sample_style << endl;
     qDebug() << "system_para_set.evapor_clear_time = " << system_para_set.evapor_clear_time << endl;
     qDebug() << "system_para_set.reac_clear_time = " << system_para_set.reac_clear_time << endl;
-    qDebug() << "system_para_set.data_file_path = " << system_para_set.data_file_path << endl;
+    qDebug() << "system_para_set.liquor_brand = " << system_para_set.liquor_brand << endl;
 
-    qDebug() << "system_para_set.inhale_time = " << system_para_set.inhale_time << endl;
-    qDebug() << "system_para_set.inhale_wait_time = " << system_para_set.inhale_wait_time << endl;
-    qDebug() << "system_para_set.exhale_time = " << system_para_set.exhale_time << endl;
-    qDebug() << "system_para_set.exhale_wait_time = " << system_para_set.exhale_wait_time << endl;
-    qDebug() << "system_para_set.hale_count = " << system_para_set.hale_count << endl;
+    qDebug() << "system_para_set.hale_count = " << system_para_set.hale_count << endl << endl;
+
+    qDebug() << "system_para_set.pwm_duty[0] = " << system_para_set.pwm_duty[0] << endl;
+    qDebug() << "system_para_set.pwm_duty[1] = " << system_para_set.pwm_duty[1] << endl;
+    qDebug() << "system_para_set.pwm_duty[2] = " << system_para_set.pwm_duty[2] << endl << endl;
+
+    qDebug() << "system_para_set.inhale_time[0] = " << system_para_set.inhale_time[0] << endl;
+    qDebug() << "system_para_set.inhale_time[1] = " << system_para_set.inhale_time[1] << endl;
+    qDebug() << "system_para_set.inhale_time[2] = " << system_para_set.inhale_time[2] << endl << endl;
+
+    qDebug() << "system_para_set.inhale_wait_time[0] = " << system_para_set.inhale_wait_time[0] << endl;
+    qDebug() << "system_para_set.inhale_wait_time[1] = " << system_para_set.inhale_wait_time[1] << endl;
+    qDebug() << "system_para_set.inhale_wait_time[2] = " << system_para_set.inhale_wait_time[2] << endl << endl;
+
+    qDebug() << "system_para_set.exhale_time[0] = " << system_para_set.exhale_time[0] << endl;
+    qDebug() << "system_para_set.exhale_time[1] = " << system_para_set.exhale_time[1] << endl;
+    qDebug() << "system_para_set.exhale_time[2] = " << system_para_set.exhale_time[2] << endl << endl;
+
+    qDebug() << "system_para_set.exhale_wait_time[0] = " << system_para_set.exhale_wait_time[0] << endl;
+    qDebug() << "system_para_set.exhale_wait_time[1] = " << system_para_set.exhale_wait_time[1] << endl;
+    qDebug() << "system_para_set.exhale_wait_time[2] = " << system_para_set.exhale_wait_time[2] << endl << endl;
+
+    /* 记录参数到txt文件 */
+    QDateTime datetime = QDateTime::currentDateTime();
+
+    QByteArray data_file_path_ba = system_para_set.liquor_brand.toLatin1();
+    char *data_file_path_char = data_file_path_ba.data();
+
+    QString f_temp = QString("/root/qt_program/") + datetime.toString("yyyy.MM.dd-hh_mm_ss_") + system_para_set.liquor_brand + "_system_para_set.txt";
+    QByteArray para_ba = f_temp.toLatin1();
+    char *para_filename = para_ba.data();
+
+    FILE *fp_para;
+    fp_para = fopen(para_filename, "w");
+
+    fprintf(fp_para, "system_para_set.preset_temp =\t%f\n", system_para_set.preset_temp);
+    fprintf(fp_para, "system_para_set.hold_time =\t%d\n", system_para_set.hold_time);
+    fprintf(fp_para, "system_para_set.sample_size =\t%d\n", system_para_set.sample_size);
+    fprintf(fp_para, "system_para_set.sample_freq =\t%f\n", system_para_set.sample_freq);
+    fprintf(fp_para, "system_para_set.sample_time =\t%d\n", system_para_set.sample_time);
+    fprintf(fp_para, "system_para_set.sample_style =\t%d\n", system_para_set.sample_style);
+    fprintf(fp_para, "system_para_set.evapor_clear_time =\t%d\n", system_para_set.evapor_clear_time);
+    fprintf(fp_para, "system_para_set.reac_clear_time =\t%d\n", system_para_set.reac_clear_time);
+    fprintf(fp_para, "system_para_set.data_file_path =\t%s\n\n", data_file_path_char);
+
+    fprintf(fp_para, "system_para_set.hale_count =\t%d\n\n", system_para_set.hale_count);
+
+    fprintf(fp_para, "system_para_set.pwm_duty[0] =\t%d\n", system_para_set.pwm_duty[0]);
+    fprintf(fp_para, "system_para_set.pwm_duty[1] =\t%d\n", system_para_set.pwm_duty[1]);
+    fprintf(fp_para, "system_para_set.pwm_duty[2] =\t%d\n\n", system_para_set.pwm_duty[2]);
+
+    fprintf(fp_para, "system_para_set.inhale_time[0] =\t%d\n", system_para_set.inhale_time[0]);
+    fprintf(fp_para, "system_para_set.inhale_time[1] =\t%d\n", system_para_set.inhale_time[1]);
+    fprintf(fp_para, "system_para_set.inhale_time[2] =\t%d\n\n", system_para_set.inhale_time[2]);
+
+    fprintf(fp_para, "system_para_set.inhale_wait_time[0] =\t%d\n", system_para_set.inhale_wait_time[0]);
+    fprintf(fp_para, "system_para_set.inhale_wait_time[1] =\t%d\n", system_para_set.inhale_wait_time[1]);
+    fprintf(fp_para, "system_para_set.inhale_wait_time[2] =\t%d\n\n", system_para_set.inhale_wait_time[2]);
+
+    fprintf(fp_para, "system_para_set.exhale_time[0] =\t%d\n", system_para_set.exhale_time[0]);
+    fprintf(fp_para, "system_para_set.exhale_time[1] =\t%d\n", system_para_set.exhale_time[1]);
+    fprintf(fp_para, "system_para_set.exhale_time[2] =\t%d\n\n", system_para_set.exhale_time[2]);
+
+    fprintf(fp_para, "system_para_set.exhale_wait_time[0] =\t%d\n", system_para_set.exhale_wait_time[0]);
+    fprintf(fp_para, "system_para_set.exhale_wait_time[1] =\t%d\n", system_para_set.exhale_wait_time[1]);
+    fprintf(fp_para, "system_para_set.exhale_wait_time[2] =\t%d\n\n", system_para_set.exhale_wait_time[2]);
+
+    fclose(fp_para);
+    fp_para = NULL;
 }
 
 /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */

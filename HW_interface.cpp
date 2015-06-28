@@ -97,8 +97,8 @@ void init_hardware(void)
     /* 载入所有相关的恒温控制参数 */
     pid_Init();
 
-    /* 片选线用gpio31 */
-    tlc1543_Init(31);
+    /* 片选线用gpio31, 修改采样程序后，不在需要SPI通信 */
+//    tlc1543_Init(31);
 
 }
 
@@ -161,8 +161,8 @@ void Application_quit(int seconds)
  */
 void close_hardware(void)
 {
-    /* 关闭tlc1543 */
-    tlc1543_Close();
+    /* 关闭tlc1543, , 修改采样程序后，不在需要SPI通信 */
+//    tlc1543_Close();
 
     /* 关闭各个PWM输出 */
     pwm_close(&pwm_8_13_airpump);
