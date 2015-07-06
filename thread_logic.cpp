@@ -23,9 +23,47 @@ LogicControlThread::LogicControlThread(QObject *parent) :
     evaporation_timer = new QTimer();
     connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evapoartion_timeout_done()));
 
-    system_state = STANDBY;//PREHEAT;
-    operation_flag.standby_flag =       UN_SET;
-    operation_flag.preheat_flag =       AL_SET;
+    /* 检查/root/qt_program/initial_state.txt来确定是初始阶段是待机状态还是预热状态（有时候调试可以跳过待机状态，避免清洗气室） */
+    FILE *fp_initial_state;
+    unsigned int temp_int;
+
+    if((fp_initial_state = fopen(INITIAL_STATE, "r")) != NULL)
+    {
+        fscanf(fp_initial_state, "skip standby state = %d\n", &temp_int);
+
+        qDebug("standby state = %d\n", temp_int);
+
+        if(temp_int)//不为0则跳过待机状态
+        {
+            system_state = PREHEAT;
+            operation_flag.standby_flag =       AL_SET;
+            operation_flag.preheat_flag =       UN_SET;
+
+            qDebug("skip the standby state, use the para initial_state.txt\n");
+        }
+        else//为0则不跳过待机状态
+        {
+            system_state = STANDBY;
+            operation_flag.standby_flag =       UN_SET;
+            operation_flag.preheat_flag =       AL_SET;
+
+            qDebug("do not skip the standby state, use the para initial_state.txt\n");
+        }
+
+        fclose(fp_initial_state);
+        fp_initial_state = NULL;
+
+    }
+    else
+    {
+        system_state = STANDBY;
+        operation_flag.standby_flag =       UN_SET;
+        operation_flag.preheat_flag =       AL_SET;
+
+        qDebug("Warning: can't find the initial_state.txt, use the para in program");
+    }
+
+
     operation_flag.evaporation_flag =   AL_SET;
     operation_flag.thermo_flag =        AL_SET;
     operation_flag.sampling_flag =      AL_SET;
@@ -83,30 +121,6 @@ void LogicControlThread::run()
 
                 if(clear_state == 1)
                 {
-                    /* 打开气泵, 清洗反应室 */
-                    //magnetic_para.M1 = HIGH;
-                    magnetic_para.M1 = LOW;
-                    //magnetic_para.M2 = HIGH;
-                    magnetic_para.M2 = LOW;
-                    //magnetic_para.M3 = HIGH;
-                    magnetic_para.M3 = LOW;
-                    magnetic_para.M4 = HIGH;
-                    //magnetic_para.M4 = LOW;
-                    emit send_to_hard_magnetic(magnetic_para);
-
-                    msleep(1000);
-
-                    pump_para.pump_switch = HIGH;
-                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
-                    pump_para.return_action_mode = STANDBY;//
-                    emit send_to_hard_pump(pump_para);
-
-                    /* 定时蒸发室清洗时间 */
-                    close_pump_and_reac_timer->start(30 * 1000);
-                    qDebug() << "reac_timer->start; evapor_clear_time 30 s." << endl;
-                }
-                else if(clear_state == 2)
-                {
                     /* 打开气泵, 清洗蒸发室*/
                     magnetic_para.M1 = HIGH;
                     //magnetic_para.M1 = LOW;
@@ -126,6 +140,30 @@ void LogicControlThread::run()
                     emit send_to_hard_pump(pump_para);
 
                     /* 定时蒸发室清洗时间 */
+                    close_pump_and_reac_timer->start(30 * 1000);
+                    qDebug() << "reac_timer->start; evapor_clear_time 30 s." << endl;
+                }
+                else if(clear_state == 2)
+                {
+                    /* 打开气泵, 清洗反应室 */
+                    //magnetic_para.M1 = HIGH;
+                    magnetic_para.M1 = LOW;
+                    //magnetic_para.M2 = HIGH;
+                    magnetic_para.M2 = LOW;
+                    //magnetic_para.M3 = HIGH;
+                    magnetic_para.M3 = LOW;
+                    magnetic_para.M4 = HIGH;
+                    //magnetic_para.M4 = LOW;
+                    emit send_to_hard_magnetic(magnetic_para);
+
+                    msleep(1000);
+
+                    pump_para.pump_switch = HIGH;
+                    pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                    pump_para.return_action_mode = STANDBY;//
+                    emit send_to_hard_pump(pump_para);
+
+                    /* 定时反应室清洗时间 */
                     close_pump_and_reac_timer->start(30 * 1000);
                     qDebug() << "reac_timer->start; reac_clear_time 30 s." << endl;
                 }
@@ -284,6 +322,7 @@ void LogicControlThread::run()
                 sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = system_para_set.liquor_brand;//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = true;
+                sample_para.plot_to_pdf = true;
                 emit send_to_dataproc_sample(sample_para);
 
                 /* 先采集3s空气中的响应 */
@@ -439,8 +478,9 @@ void LogicControlThread::run()
                 /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
                 sample_para.sample_time = system_para_set.evapor_clear_time;//单位s, 每个通道的采样时间长度
-                sample_para.filename_prefix = "clear_data";//数据文件路径以及文件名前缀,
+                sample_para.filename_prefix = system_para_set.liquor_brand + "_clear_data";//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = false;
+                sample_para.plot_to_pdf = true;
                 emit send_to_dataproc_sample(sample_para);
 
                 /* 先清洗反应室 */
@@ -475,9 +515,9 @@ void LogicControlThread::run()
                     pump_para.return_action_mode = CLEAR;//
                     emit send_to_hard_pump(pump_para);
 
-                    /* 定时蒸发室清洗时间 */
-                    close_pump_and_reac_timer->start(system_para_set.evapor_clear_time * 1000);
-                    qDebug() << "reac_timer->start; evapor_clear_time " << system_para_set.evapor_clear_time << " s." << endl;
+                    /* 定时反应室清洗时间 */
+                    close_pump_and_reac_timer->start(system_para_set.reac_clear_time * 1000);
+                    qDebug() << "reac_timer->start; reac_clear_time " << system_para_set.reac_clear_time << " s." << endl;
                 }
                 else if(clear_state == 2)
                 {
@@ -500,8 +540,8 @@ void LogicControlThread::run()
                     emit send_to_hard_pump(pump_para);
 
                     /* 定时蒸发室清洗时间 */
-                    close_pump_and_reac_timer->start(system_para_set.reac_clear_time * 1000);
-                    qDebug() << "reac_timer->start; reac_clear_time " << system_para_set.reac_clear_time << " s." << endl;
+                    close_pump_and_reac_timer->start(system_para_set.evapor_clear_time * 1000);
+                    qDebug() << "reac_timer->start; evapor_clear_time " << system_para_set.evapor_clear_time << " s." << endl;
                 }
                 else if(clear_state == 3)//清洗完成
                 {
@@ -671,7 +711,7 @@ void LogicControlThread::close_pump_and_reac()
             //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
             emit send_to_hard_pump(pump_para);
 
-            qDebug() << "evapor clear done!" << endl;
+            qDebug() << "reac clear done!" << endl;
 
             clear_state_change = true;
         }
@@ -683,7 +723,7 @@ void LogicControlThread::close_pump_and_reac()
             //pump_para.hold_time = system_para_set.pump_up_time * 1000;//单位ms
             emit send_to_hard_pump(pump_para);
 
-            qDebug() << "reac clear done!" << endl;
+            qDebug() << "evapor clear done!" << endl;
 
             /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
             user_button_enable.mode = CLEAR_BUTTON;
@@ -696,7 +736,7 @@ void LogicControlThread::close_pump_and_reac()
 }
 
 /* 接收来自数据处理线程的采样完成信号 */
-void LogicControlThread::recei_fro_hardware_sample_done()
+void LogicControlThread::recei_fro_dataproc_sample_done()
 {
     /* 切换到下一个状态 */
     system_state = CLEAR;
@@ -717,6 +757,8 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
 
     read_para_flag = true;
 
+    int i = 0;
+
     qDebug() << "system_para_set.preset_temp = " << system_para_set.preset_temp << endl;
     qDebug() << "system_para_set.hold_time = " << system_para_set.hold_time << endl;
     qDebug() << "system_para_set.sample_size = " << system_para_set.sample_size << endl;
@@ -729,25 +771,14 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
 
     qDebug() << "system_para_set.hale_count = " << system_para_set.hale_count << endl << endl;
 
-    qDebug() << "system_para_set.pwm_duty[0] = " << system_para_set.pwm_duty[0] << endl;
-    qDebug() << "system_para_set.pwm_duty[1] = " << system_para_set.pwm_duty[1] << endl;
-    qDebug() << "system_para_set.pwm_duty[2] = " << system_para_set.pwm_duty[2] << endl << endl;
-
-    qDebug() << "system_para_set.inhale_time[0] = " << system_para_set.inhale_time[0] << endl;
-    qDebug() << "system_para_set.inhale_time[1] = " << system_para_set.inhale_time[1] << endl;
-    qDebug() << "system_para_set.inhale_time[2] = " << system_para_set.inhale_time[2] << endl << endl;
-
-    qDebug() << "system_para_set.inhale_wait_time[0] = " << system_para_set.inhale_wait_time[0] << endl;
-    qDebug() << "system_para_set.inhale_wait_time[1] = " << system_para_set.inhale_wait_time[1] << endl;
-    qDebug() << "system_para_set.inhale_wait_time[2] = " << system_para_set.inhale_wait_time[2] << endl << endl;
-
-    qDebug() << "system_para_set.exhale_time[0] = " << system_para_set.exhale_time[0] << endl;
-    qDebug() << "system_para_set.exhale_time[1] = " << system_para_set.exhale_time[1] << endl;
-    qDebug() << "system_para_set.exhale_time[2] = " << system_para_set.exhale_time[2] << endl << endl;
-
-    qDebug() << "system_para_set.exhale_wait_time[0] = " << system_para_set.exhale_wait_time[0] << endl;
-    qDebug() << "system_para_set.exhale_wait_time[1] = " << system_para_set.exhale_wait_time[1] << endl;
-    qDebug() << "system_para_set.exhale_wait_time[2] = " << system_para_set.exhale_wait_time[2] << endl << endl;
+    for(i = 0; i < system_para_set.hale_count; i++)
+    {
+        qDebug("system_para_set.inhale_time[%d] = %d\n", i, system_para_set.inhale_time[i]);
+        qDebug("system_para_set.pwm_duty[%d] = %d\n", i, system_para_set.pwm_duty[i]);
+        qDebug("system_para_set.inhale_wait_time[%d] = %d\n", i, system_para_set.inhale_wait_time[i]);
+        qDebug("system_para_set.exhale_time[%d] = %d\n", i, system_para_set.exhale_time[i]);
+        qDebug("system_para_set.exhale_wait_time[%d] = %d\n\n", i, system_para_set.exhale_wait_time[i]);
+    }
 
     /* 记录参数到txt文件 */
     QDateTime datetime = QDateTime::currentDateTime();
@@ -774,25 +805,14 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
 
     fprintf(fp_para, "system_para_set.hale_count =\t%d\n\n", system_para_set.hale_count);
 
-    fprintf(fp_para, "system_para_set.pwm_duty[0] =\t%d\n", system_para_set.pwm_duty[0]);
-    fprintf(fp_para, "system_para_set.pwm_duty[1] =\t%d\n", system_para_set.pwm_duty[1]);
-    fprintf(fp_para, "system_para_set.pwm_duty[2] =\t%d\n\n", system_para_set.pwm_duty[2]);
-
-    fprintf(fp_para, "system_para_set.inhale_time[0] =\t%d\n", system_para_set.inhale_time[0]);
-    fprintf(fp_para, "system_para_set.inhale_time[1] =\t%d\n", system_para_set.inhale_time[1]);
-    fprintf(fp_para, "system_para_set.inhale_time[2] =\t%d\n\n", system_para_set.inhale_time[2]);
-
-    fprintf(fp_para, "system_para_set.inhale_wait_time[0] =\t%d\n", system_para_set.inhale_wait_time[0]);
-    fprintf(fp_para, "system_para_set.inhale_wait_time[1] =\t%d\n", system_para_set.inhale_wait_time[1]);
-    fprintf(fp_para, "system_para_set.inhale_wait_time[2] =\t%d\n\n", system_para_set.inhale_wait_time[2]);
-
-    fprintf(fp_para, "system_para_set.exhale_time[0] =\t%d\n", system_para_set.exhale_time[0]);
-    fprintf(fp_para, "system_para_set.exhale_time[1] =\t%d\n", system_para_set.exhale_time[1]);
-    fprintf(fp_para, "system_para_set.exhale_time[2] =\t%d\n\n", system_para_set.exhale_time[2]);
-
-    fprintf(fp_para, "system_para_set.exhale_wait_time[0] =\t%d\n", system_para_set.exhale_wait_time[0]);
-    fprintf(fp_para, "system_para_set.exhale_wait_time[1] =\t%d\n", system_para_set.exhale_wait_time[1]);
-    fprintf(fp_para, "system_para_set.exhale_wait_time[2] =\t%d\n\n", system_para_set.exhale_wait_time[2]);
+    for(i = 0; i < system_para_set.hale_count; i++)
+    {
+        fprintf(fp_para, "system_para_set.inhale_time[%d] =\t%d\n", i, system_para_set.inhale_time[i]);
+        fprintf(fp_para, "system_para_set.pwm_duty[%d] =\t%d\n", i, system_para_set.pwm_duty[i]);
+        fprintf(fp_para, "system_para_set.inhale_wait_time[%d] =\t%d\n", i, system_para_set.inhale_wait_time[i]);
+        fprintf(fp_para, "system_para_set.exhale_time[%d] =\t%d\n", i, system_para_set.exhale_time[i]);
+        fprintf(fp_para, "system_para_set.exhale_wait_time[%d] =\t%d\n\n", i, system_para_set.exhale_wait_time[i]);
+    }
 
     fclose(fp_para);
     fp_para = NULL;
@@ -836,17 +856,17 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
     }
     else if(user_button_enable_para.mode == PLOT_BUTTON)
     {
-        /* 采样绘图 */
-        sample_para.sample_freq = 60;//单位Hz,每个通道的采样频率
-        sample_para.sample_time = 60;//单位s, 每个通道的采样时间长度
-        sample_para.filename_prefix = "clear_test";//数据文件路径以及文件名前缀,
-        sample_para.sample_inform_flag = false;//不要通知，否则扰乱循环
-        emit send_to_dataproc_sample(sample_para);
+//        /* 采样绘图 */
+//        sample_para.sample_freq = 60;//单位Hz,每个通道的采样频率
+//        sample_para.sample_time = 60;//单位s, 每个通道的采样时间长度
+//        sample_para.filename_prefix = "clear_test";//数据文件路径以及文件名前缀,
+//        sample_para.sample_inform_flag = false;//不要通知，否则扰乱循环
+//        emit send_to_dataproc_sample(sample_para);
 
-        /* 通知GUI线程禁能plot按钮 */
-        user_button_enable.mode = PLOT_BUTTON;
-        user_button_enable.enable_time = 0;//采样绘图时间结束后，数据处理线程将发送信号给GUI线程将plot使能
-        emit send_to_GUI_user_buttton_enable(user_button_enable);
+//        /* 通知GUI线程禁能plot按钮 */
+//        user_button_enable.mode = PLOT_BUTTON;
+//        user_button_enable.enable_time = 0;//采样绘图时间结束后，数据处理线程将发送信号给GUI线程将plot使能
+//        emit send_to_GUI_user_buttton_enable(user_button_enable);
     }
     else if(user_button_enable_para.mode == DONE_BUTTON)
     {

@@ -96,7 +96,7 @@ public slots:
     void recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_para_set_info);
 
     /* 接收来自数据处理线程的采样完成信号 */
-    void recei_fro_hardware_sample_done();
+    void recei_fro_dataproc_sample_done();
 
     /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
     void recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE user_button_enable_para);

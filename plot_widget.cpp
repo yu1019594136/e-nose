@@ -3,7 +3,8 @@
 #include "plot_widget.h"
 
 /* 该变量在数据处理线程的实现文件中声明 */
-//extern u_int16_t **p_data;
+extern u_int16_t **p_sample_data;
+extern u_int16_t **p_clear_data;
 
 Plot_Widget::Plot_Widget(QWidget *parent)
 {

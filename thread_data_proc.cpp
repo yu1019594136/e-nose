@@ -12,10 +12,14 @@
 #include <sys/types.h>
 #include <sys/select.h>
 #include <sys/time.h>
+#include <sys/stat.h>
 #include <signal.h>
 #include <error.h>
 #include "tlc1543.h"
 #include "HW_interface.h"
+
+#include <QStringList>
+
 /*-----------------pru-----------------*/
 #include <prussdrv.h>
 #include <pruss_intc_mapping.h>
@@ -24,7 +28,6 @@
 #include <termios.h>
 #include <sys/mman.h>
 
-/*-----------------pru-----------------*/
 /* DDR地址 */
 unsigned int addr;
 unsigned int dataSize;
@@ -32,6 +35,10 @@ unsigned int dataSize;
 /* 采样配置相关数据 */
 unsigned int spiData[13];
 unsigned int timerData[2];
+
+/*-----------------plot-----------------*/
+//u_int16_t **p_sample_data;
+//u_int16_t **p_clear_data;
 
 /*********************数据处理线程*****************************/
 DataProcessThread::DataProcessThread(QObject *parent) :
@@ -42,17 +49,29 @@ DataProcessThread::DataProcessThread(QObject *parent) :
     plot_info.width = 1000;
     plot_info.height = 65536;
     plot_info.sample_count_real = 0;
+    fre_divi_fac = 1;
 
     filename = NULL;
     sample_flag = false;
 
+    plot_process = new QProcess();
+    plot_process->setReadChannelMode(QProcess::SeparateChannels);
+    plot_process->setReadChannel(QProcess::StandardOutput);
+    connect(plot_process, SIGNAL(started()), this, SLOT(process_started()));
+    connect(plot_process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(process_error(QProcess::ProcessError)));
+    connect(plot_process, SIGNAL(readyReadStandardOutput()), this, SLOT(process_readyreadoutput()));
+    connect(plot_process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(process_finished(int,QProcess::ExitStatus)));
+
+    connect(this, SIGNAL(send_to_plot2pdf()), this, SLOT(plot2pdf()));
 }
 
 void DataProcessThread::run()
 {
-    msleep(100);
-
+    FILE *fp;
     int event_num = 0;
+
+    /* 数据处理线程一开始时就会查询缓存文件plot2pdf_task_file.txt，如果还有绘图任务那么开始新一轮绘图任务 */
+    emit send_to_plot2pdf();
 
     PRU_init_loadcode();
 
@@ -78,6 +97,33 @@ void DataProcessThread::run()
                 qDebug("Data is saved in %s.\n", filename);
             else
                 qDebug("Data save error!\n");
+
+            /* 采集数据完成后是否需要将数据绘图成pdf文件 */
+            if(sample.plot_to_pdf)
+            {
+                qDebug() << "sample.plot_to_pdf = " << sample.plot_to_pdf << endl;
+
+                if((fp = fopen(PLOT_TASK_FILE, "a")) != NULL)
+                {
+                    fprintf(fp, "%s\n", filename);
+                    fflush(fp);
+                    fclose(fp);
+                    fp = NULL;
+
+                    qDebug("A plot task (%s) is added into plot2pdf_task_file.txt!\n", filename);
+                }
+                else
+                {
+                    qDebug("Warning: adding plot task (%s) into plot2pdf_task_file.txt failed!\n", filename);
+                }
+
+                emit send_to_plot2pdf();
+            }
+            else
+            {
+                qDebug() << "sample.plot_to_pdf = " << sample.plot_to_pdf << endl;
+                qDebug("This plot task (%s) is ignored!\n", filename);
+            }
 
             if(sample.sample_inform_flag)
             {
@@ -113,6 +159,7 @@ void DataProcessThread::recei_fro_logic_sample(SAMPLE sample_para)
     sample.sample_time = sample_para.sample_time;
     sample.filename_prefix = QString("/root/qt_program/") + datetime.toString("yyyy.MM.dd-hh_mm_ss_")+ sample_para.filename_prefix  + ".txt";
     sample.sample_inform_flag = sample_para.sample_inform_flag;
+    sample.plot_to_pdf = sample_para.plot_to_pdf;
 
     ba = sample.filename_prefix.toLatin1();
     filename = ba.data();
@@ -279,4 +326,168 @@ int save_data_to_file(char * filename, unsigned int numberOutputSamples)
    fclose(fp_data_file);
 
    return SUCCESS;
+}
+
+void DataProcessThread::process_started()
+{
+    qDebug() << "plot_process start" << endl;
+}
+
+void DataProcessThread::process_error(QProcess::ProcessError processerror)
+{
+    qDebug() << "plot_process error = " << processerror << endl;
+}
+
+void DataProcessThread::process_readyreadoutput()
+{
+    qDebug() << plot_process->readAllStandardOutput();
+}
+
+/*
+ * 当一个绘图进程结束时，将会先检查缓存文件plot2pdf_task_file.txt中的任务数量，
+    如果数量大于1，先将任务数读取出来，再报告剩余任务数（不包含第一个已经完成的任务），并将除第一个任务外的其他任务重新写入缓存文件plot2pdf_task_file.txt中。
+    如果任务数等于1（即只剩下一个已经完成的任务），则清除文件内容
+ */
+void DataProcessThread::process_finished(int i, QProcess::ExitStatus exitstate)
+{
+    //struct stat file_info;
+    FILE *fp;
+    char *filename_temp;
+    char **filename_array;
+    unsigned int task_count = 0;
+    unsigned int j;
+
+    qDebug() << "plot_process finish" << endl;
+    qDebug() << "exit code " << i << endl;
+    if(exitstate == QProcess::NormalExit)
+        qDebug() << "The process exited normally."<< endl;
+    else
+        qDebug() << "The process crashed." << endl;
+
+    /* 从plot2pdf_task_file.txt中清除第一个已经完成的绘图任务 */
+    filename_temp = (char *)malloc(512 * sizeof(char));
+
+    /* 读取文件中的任务个数 */
+    if((fp = fopen(PLOT_TASK_FILE, "r")) != NULL)
+    {
+        while(!feof(fp))
+        {
+            fscanf(fp, "%s\n", filename_temp);
+            task_count++;
+        }
+        fclose(fp);
+        fp = NULL;
+
+        /* 报告任务剩余数量，不包含第一个已经完成的 */
+        qDebug("%d tasks left in plot2pdf_task_file.txt!\n", task_count - 1);
+    }
+    else
+    {
+        qDebug("Warning: read task from file failed!\n");
+    }
+
+    if(task_count > 0)//
+    {
+        filename_array = (char **)malloc(task_count * sizeof(char *));
+
+        /* 读取出文件中的任务，并清除第一个任务，在将后续任务重新写入文件 */
+        if((fp = fopen(PLOT_TASK_FILE, "r")) != NULL)
+        {
+            for(j = 0; j < task_count; j++)
+            {
+                filename_array[j] = (char *)malloc(sizeof(char) * 512);
+                memset(filename_array[j], 0, sizeof(char) * 512);
+                fscanf(fp, "%s\n", filename_array[j]);
+            }
+            fclose(fp);
+            fp = NULL;
+        }
+        else
+        {
+            qDebug("Warning: read task from file failed!\n");
+        }
+
+        /* 绘图任务读取出来除第一个任务外，其余任务重新写入文件 */
+        if((fp = fopen(PLOT_TASK_FILE, "w")) != NULL)
+        {
+            for(j = 1; j < task_count; j++)
+            {
+                fprintf(fp, "%s\n", filename_array[j]);
+                qDebug("Task %d: %s\n", j, filename_array[j]);
+            }
+            fflush(fp);
+            fclose(fp);
+            fp = NULL;
+
+            qDebug("task list file re-writing succeed!\n");
+        }
+        else
+        {
+            qDebug("Warning: task list file re-writing failed!\n");
+        }
+
+        free(filename_array);
+
+        if(task_count > 1)
+        {
+            /* 开始新一轮绘图任务 */
+            emit send_to_plot2pdf();
+        }
+    }
+}
+
+/*
+plot2pdf()槽函数先检查绘图进程是否空闲，
+    如果空闲，那么检查plot2pdf_task_file.txt文件中是否有未完成的绘图任务，
+        如果有未完成的绘图任务，那么将启动绘图进程执行任务列表中的第一个绘图任务，退出
+        如果没有未完成的绘图任务，那么退出。
+    如果不空闲，则报告：任务已经添加至plot2pdf_task_file.txt文件中，稍后执行该绘图任务
+*/
+void DataProcessThread::plot2pdf()
+{
+    QStringList arguments;
+    struct stat file_info;
+    FILE *fp;
+    char *filename_temp;
+
+    if(plot_process->state() == QProcess::NotRunning)//进程空闲
+    {
+        qDebug("plot_process state: Not running. Let's do some plot task!\n");
+
+        /* 读取文件大小信 */
+        stat(PLOT_TASK_FILE, &file_info);
+
+        if(file_info.st_size > 0)//有未完成的绘图任务
+        {
+            filename_temp = (char *)malloc(512 * sizeof(char));
+
+            /* 读取文件中的任务个数 */
+            if((fp = fopen(PLOT_TASK_FILE, "r")) != NULL)
+            {
+                fscanf(fp, "%s\n", filename_temp);
+                fclose(fp);
+                fp = NULL;
+            }
+            else
+            {
+                qDebug("Warning: read task from file failed!\n");
+            }
+
+            arguments << QString(filename_temp);
+
+            plot_process->start(PLOT_SCRIPT, arguments);
+
+            qDebug("A plot task (%s) from plot2pdf_task_file.txt is executing ...\n", filename_temp);
+
+            free(filename_temp);
+        }
+        else//没有未完成的绘图任务
+        {
+            qDebug("No plot task in plot2pdf_task_file.txt! Waiting new plot task...\n");
+        }
+    }
+    else//进程忙, 绘图任务缓存到文件
+    {
+        qDebug("This plot task has been added into plot2pdf_task_file.txt, it will be executed later!\n");
+    }
 }

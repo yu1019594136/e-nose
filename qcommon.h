@@ -3,6 +3,14 @@
 
 #include <QString>
 
+/* 程序运行是所需要的一些配置文件存放路径 */
+#define ITEM_FILE_PATH              "/root/qt_program/item_file.txt"
+#define DEFAULT_CONFIG_PARA_PATH    "/root/qt_program/default_config_para.txt"
+#define INITIAL_STATE               "/root/qt_program/initial_state.txt"
+#define PLOT_SCRIPT                 "/root/qt_program/plot.sh"
+#define PLOT_TASK_FILE              "/root/qt_program/plot2pdf_task_file.txt"
+#define QUERY_PLOT_TASK_FILE        "query plot task file"
+
 typedef struct{
     int thermo_switch;//加热带电路开关，HIGH? LOW?
     float preset_temp;//预设温度
@@ -26,6 +34,7 @@ typedef struct{
     int sample_time;//每个通道的时间长度
     QString filename_prefix;
     bool sample_inform_flag;//采样完成后是否需要硬件线程返回信号通知逻辑线程
+    bool plot_to_pdf;//采集数据完成后是否需要将数据绘图成pdf文件
 } SAMPLE;
 
 /* 需要实时更新的信息 */
@@ -47,17 +56,17 @@ typedef struct{
     QString liquor_brand;   //白酒品牌
 
     /* 呼吸时间设置 */
-    unsigned int pwm_duty[3];
-    unsigned int inhale_time[3];
-    unsigned int inhale_wait_time[3];
-    unsigned int exhale_time[3];
-    unsigned int exhale_wait_time[3];
+    unsigned int pwm_duty[5];
+    unsigned int inhale_time[5];
+    unsigned int inhale_wait_time[5];
+    unsigned int exhale_time[5];
+    unsigned int exhale_wait_time[5];
     unsigned int hale_count;
 } SYSTEM_PARA_SET;
 
 enum SAMPLE_STYLE{
     SINGLE = 0,
-    CONTINUE
+    CONTINUE = 1
 };
 
 typedef struct{

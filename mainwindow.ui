@@ -47,7 +47,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="currentIndex">
-     <number>2</number>
+     <number>4</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideMiddle</enum>
@@ -564,7 +564,7 @@
        <number>10</number>
       </property>
       <property name="value">
-       <number>1000</number>
+       <number>2000</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_clear">
@@ -623,10 +623,10 @@
        <number>999999</number>
       </property>
       <property name="singleStep">
-       <number>10</number>
+       <number>5</number>
       </property>
       <property name="value">
-       <number>40</number>
+       <number>100</number>
       </property>
      </widget>
      <widget class="QSpinBox" name="set_evapor_time">
@@ -654,7 +654,7 @@
        <number>99999</number>
       </property>
       <property name="singleStep">
-       <number>10</number>
+       <number>5</number>
       </property>
       <property name="value">
        <number>60</number>
@@ -868,7 +868,7 @@
        <number>99999</number>
       </property>
       <property name="value">
-       <number>4</number>
+       <number>5</number>
       </property>
      </widget>
     </widget>
@@ -886,44 +886,51 @@
        </rect>
       </property>
       <property name="value">
-       <number>2</number>
+       <number>3</number>
       </property>
      </widget>
      <widget class="QWidget" name="gridLayoutWidget">
       <property name="geometry">
        <rect>
         <x>80</x>
-        <y>50</y>
+        <y>40</y>
         <width>391</width>
-        <height>161</height>
+        <height>171</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
+       <item row="4" column="2">
+        <widget class="QSpinBox" name="spinBox_19">
+         <property name="value">
+          <number>15</number>
+         </property>
+        </widget>
+       </item>
        <item row="1" column="2">
         <widget class="QSpinBox" name="spinBox_5">
          <property name="value">
-          <number>6</number>
+          <number>15</number>
          </property>
         </widget>
        </item>
        <item row="3" column="3">
         <widget class="QSpinBox" name="spinBox_12">
          <property name="value">
-          <number>4</number>
+          <number>1</number>
          </property>
         </widget>
        </item>
        <item row="3" column="4">
         <widget class="QSpinBox" name="spinBox_13">
          <property name="value">
-          <number>3</number>
+          <number>12</number>
          </property>
         </widget>
        </item>
        <item row="3" column="2">
         <widget class="QSpinBox" name="spinBox_11">
          <property name="value">
-          <number>6</number>
+          <number>15</number>
          </property>
         </widget>
        </item>
@@ -933,7 +940,7 @@
           <enum>Qt::LeftToRight</enum>
          </property>
          <property name="value">
-          <number>3</number>
+          <number>12</number>
          </property>
         </widget>
        </item>
@@ -950,7 +957,7 @@
           <number>1</number>
          </property>
          <property name="value">
-          <number>4</number>
+          <number>2</number>
          </property>
         </widget>
        </item>
@@ -971,14 +978,14 @@
        <item row="1" column="4">
         <widget class="QSpinBox" name="spinBox_3">
          <property name="value">
-          <number>3</number>
+          <number>12</number>
          </property>
         </widget>
        </item>
        <item row="2" column="2">
         <widget class="QSpinBox" name="spinBox_7">
          <property name="value">
-          <number>6</number>
+          <number>15</number>
          </property>
         </widget>
        </item>
@@ -998,7 +1005,7 @@
           <number>5000</number>
          </property>
          <property name="value">
-          <number>50000</number>
+          <number>55000</number>
          </property>
         </widget>
        </item>
@@ -1011,12 +1018,46 @@
           <number>5000</number>
          </property>
          <property name="value">
-          <number>80000</number>
+          <number>70000</number>
          </property>
         </widget>
        </item>
        <item row="3" column="1">
         <widget class="QSpinBox" name="spinBox_16">
+         <property name="maximum">
+          <number>125000</number>
+         </property>
+         <property name="singleStep">
+          <number>5000</number>
+         </property>
+         <property name="value">
+          <number>125000</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="3">
+        <widget class="QSpinBox" name="spinBox_20">
+         <property name="value">
+          <number>3</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="4">
+        <widget class="QSpinBox" name="spinBox_21">
+         <property name="value">
+          <number>12</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="0">
+        <widget class="QSpinBox" name="spinBox_18">
+         <property name="value">
+          <number>1</number>
+         </property>
+        </widget>
+       </item>
+       <item row="4" column="1">
+        <widget class="QSpinBox" name="spinBox_17">
          <property name="maximum">
           <number>125000</number>
          </property>

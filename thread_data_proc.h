@@ -8,6 +8,9 @@
 #include "qcommon.h"
 #include <sys/types.h>
 
+/*-----------------plot-----------------*/
+#include <QProcess>
+
 /*-----------------pru-----------------*/
 #define ADC_PRU_NUM	   0   // using PRU0 for the ADC capture
 #define CLK_PRU_NUM	   1   // using PRU1 for the sample clock
@@ -72,6 +75,10 @@ class DataProcessThread : public QThread
     Q_OBJECT
 public:
     explicit DataProcessThread(QObject *parent = 0);
+
+    /* 绘图函数 */
+    void plot_func(QString argument);
+
     void stop();
 
 protected:
@@ -81,10 +88,13 @@ private:
     volatile bool stopped;
     SAMPLE sample;//采样控制参数
     PLOT_INFO plot_info;//绘图尺寸
+    int fre_divi_fac;//数据绘图分频因子
 
     char *filename;
     QByteArray ba;
     bool sample_flag;
+
+    QProcess *plot_process;
 
 signals:
     void send_to_PlotWidget_plotdata(PLOT_INFO plot_info);
@@ -95,13 +105,24 @@ signals:
     /* 此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能 */
     void send_to_GUI_enable_plot_pushbutton();
 
+    /* 发送信号驱使槽函数绘图pdf文件 */
+    void send_to_plot2pdf();
+
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */
     void recei_fro_logic_sample(SAMPLE sample_para);
 
 private slots:
-    /* 采样定时溢出 */
-//    void sample_timeout();
+
+    void process_started();
+
+    void process_finished(int,QProcess::ExitStatus);
+
+    void process_error(QProcess::ProcessError);
+
+    void process_readyreadoutput();
+
+    void plot2pdf();
 
 };
 

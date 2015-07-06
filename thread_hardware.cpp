@@ -26,14 +26,6 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     beep_timer = new QTimer();
     connect(beep_timer, SIGNAL(timeout()), this, SLOT(beep_timeout()));
 
-//    /* 实例化一个定时器用于气泵开启时间控制 */
-//    pump_timer = new QTimer();
-//    connect(pump_timer, SIGNAL(timeout()), this, SLOT(pump_timeout()));
-
-//    /* 实例化一个定时器用于蒸发时间控制 */
-//    evaporation_timer = new QTimer();
-//    connect(evaporation_timer, SIGNAL(timeout()), this, SLOT(evaporation_timeout()));
-
     stopped = false;
 
 }

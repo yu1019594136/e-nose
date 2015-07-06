@@ -33,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 从item_file.txt中读取条目添加到UI的comboBox */
     QString temp;
     QStringList q_str_list;
-    QFile item_file("/root/qt_program/item_file.txt");
+    QFile item_file(ITEM_FILE_PATH);
 
     if(!item_file.open(QIODevice::ReadOnly | QIODevice::Text))
         qDebug() << "can not open the file:" << item_file.fileName() << endl;
@@ -51,6 +51,138 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     /* 在最后一个条目中加入分隔符 */
     ui->comboBox_data_filepath->insertSeparator(ui->comboBox_data_filepath->count() - 1);
     ui->comboBox_data_filepath->clearEditText();
+
+    /* 从default_config_para.txt文件读取默认配置参数 */
+    FILE *fp_default_para;
+    unsigned int temp_uint;
+    int temp_int;
+    int temp_current_index;
+    float temp_float;
+    char temp_string[1024];
+    QString temp_QString;
+
+
+    if((fp_default_para = fopen(DEFAULT_CONFIG_PARA_PATH, "r")) != NULL)
+    {
+        fscanf(fp_default_para, "system_para_set.preset_temp =\t%f\n", &temp_float);
+        ui->set_evapor_temp->setValue(temp_float);
+
+        fscanf(fp_default_para, "system_para_set.hold_time =\t%d\n", &temp_int);
+        ui->set_evapor_time->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.sample_size =\t%d\n", &temp_int);
+        ui->set_pump_up_time->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.sample_freq =\t%f\n", &temp_float);
+        ui->set_sample_rate->setValue(temp_float);
+
+        fscanf(fp_default_para, "system_para_set.sample_time =\t%d\n", &temp_int);
+        ui->set_sample_time->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.sample_style =\t%d\n", &temp_int);
+        if(temp_int == SINGLE)
+        {
+            ui->radioButton_single->setChecked(true);
+            ui->radioButton_continue->setChecked(false);
+        }
+        else if(temp_int == CONTINUE)
+        {
+            ui->radioButton_single->setChecked(false);
+            ui->radioButton_continue->setChecked(true);
+        }
+
+        fscanf(fp_default_para, "system_para_set.evapor_clear_time =\t%d\n", &temp_int);
+        ui->set_evapor_clear->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.reac_clear_time =\t%d\n", &temp_int);
+        ui->set_reac_clear->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.data_file_path =\t%s\n\n", temp_string);
+        temp_QString = temp_string;
+
+        temp_current_index = ui->comboBox_data_filepath->findText(temp_QString);
+        if(temp_current_index != -1)//如果QComboBox中该表项存在匹配表项，那么将其设置为当前表项
+        {
+            ui->comboBox_data_filepath->setCurrentIndex(temp_current_index);
+        }
+        else//如果QComboBox中该表项不存在匹配表项，那么将其添加到已经存在的列表的最前面
+        {
+            ui->comboBox_data_filepath->insertItem(0, temp_QString);
+            ui->comboBox_data_filepath->setCurrentIndex(0);
+        }
+
+        fscanf(fp_default_para, "system_para_set.hale_count =\t%d\n\n", &temp_int);
+        ui->spinBox->setValue(temp_int);
+
+        fscanf(fp_default_para, "system_para_set.inhale_time[0] =\t%d\n", &temp_uint);
+        ui->spinBox_2->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.pwm_duty[0] =\t%d\n", &temp_uint);
+        ui->spinBox_14->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_wait_time[0] =\t%d\n", &temp_uint);
+        ui->spinBox_5->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_time[0] =\t%d\n", &temp_uint);
+        ui->spinBox_4->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_wait_time[0] =\t%d\n\n", &temp_uint);
+        ui->spinBox_3->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_time[1] =\t%d\n", &temp_uint);
+        ui->spinBox_6->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.pwm_duty[1] =\t%d\n", &temp_uint);
+        ui->spinBox_15->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_wait_time[1] =\t%d\n", &temp_uint);
+        ui->spinBox_7->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_time[1] =\t%d\n", &temp_uint);
+        ui->spinBox_8->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_wait_time[1] =\t%d\n\n", &temp_uint);
+        ui->spinBox_9->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_time[2] =\t%d\n", &temp_uint);
+        ui->spinBox_10->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.pwm_duty[2] =\t%d\n", &temp_uint);
+        ui->spinBox_16->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_wait_time[2] =\t%d\n", &temp_uint);
+        ui->spinBox_11->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_time[2] =\t%d\n", &temp_uint);
+        ui->spinBox_12->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_wait_time[2] =\t%d\n\n", &temp_uint);
+        ui->spinBox_13->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_time[3] =\t%d\n", &temp_uint);
+        ui->spinBox_18->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.pwm_duty[3] =\t%d\n", &temp_uint);
+        ui->spinBox_17->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.inhale_wait_time[3] =\t%d\n", &temp_uint);
+        ui->spinBox_19->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_time[3] =\t%d\n", &temp_uint);
+        ui->spinBox_20->setValue(temp_uint);
+
+        fscanf(fp_default_para, "system_para_set.exhale_wait_time[3] =\t%d\n\n", &temp_uint);
+        ui->spinBox_21->setValue(temp_uint);
+
+        qDebug("use the para in file default_config_para.txt.\n");
+
+        fclose(fp_default_para);
+        fp_default_para = NULL;
+    }
+    else
+    {
+        qDebug("Warning: can't open the default_config_para.txt, use the default config para in e-nose program.\n");
+    }
 
     /* 隐藏鼠标 */
     QWSServer::setCursorVisible(false);
@@ -109,7 +241,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     connect(this, SIGNAL(send_to_logic_system_para_set(SYSTEM_PARA_SET)), logic_thread, SLOT(recei_fro_GUI_system_para_set(SYSTEM_PARA_SET)), Qt::QueuedConnection);
 
     /* 数据处理线程采样完成后发送信号给逻辑线程 */
-    connect(dataprocess_thread, SIGNAL(send_to_logic_sample_done()), logic_thread, SLOT(recei_fro_hardware_sample_done()), Qt::QueuedConnection);
+    connect(dataprocess_thread, SIGNAL(send_to_logic_sample_done()), logic_thread, SLOT(recei_fro_dataproc_sample_done()), Qt::QueuedConnection);
 
     /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
     connect(this, SIGNAL(send_to_logic_user_button_action(USER_BUTTON_ENABLE)), logic_thread, SLOT(recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE)), Qt::QueuedConnection);
@@ -327,14 +459,6 @@ void MainWindow::recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_but
         ui->pushButton_done->setEnabled(true);
         qDebug() << "clear pause plot done pushbutton enabled" << endl;
     }
-//    else if(user_button_enable_para.mode == CLEAR_BUTTON_DISABLE)
-//    {
-//        ui->pushButton_clear_2->setEnabled(false);
-//        ui->pushButton_pause->setEnabled(false);
-//        ui->pushButton_plot->setEnabled(false);
-//        ui->pushButton_done->setEnabled(false);
-//        qDebug() << "clear pause plot done pushbutton disabled" << endl;
-//    }
     else if(user_button_enable_para.mode == PLOT_BUTTON)
     {
         ui->pushButton_plot->setEnabled(false);
@@ -382,24 +506,29 @@ void MainWindow::on_pushButton_al_set_clicked()
     system_para_set.pwm_duty[0] = ui->spinBox_14->value();
     system_para_set.pwm_duty[1] = ui->spinBox_15->value();
     system_para_set.pwm_duty[2] = ui->spinBox_16->value();
+    system_para_set.pwm_duty[3] = ui->spinBox_17->value();
 
-    system_para_set.inhale_time[0] = ui->spinBox_2->value();;
-    system_para_set.inhale_time[1] = ui->spinBox_6->value();;
-    system_para_set.inhale_time[2] = ui->spinBox_10->value();;
+    system_para_set.inhale_time[0] = ui->spinBox_2->value();
+    system_para_set.inhale_time[1] = ui->spinBox_6->value();
+    system_para_set.inhale_time[2] = ui->spinBox_10->value();
+    system_para_set.inhale_time[3] = ui->spinBox_18->value();
 
-    system_para_set.inhale_wait_time[0] = ui->spinBox_5->value();;
-    system_para_set.inhale_wait_time[1] = ui->spinBox_7->value();;
-    system_para_set.inhale_wait_time[2] = ui->spinBox_11->value();;
+    system_para_set.inhale_wait_time[0] = ui->spinBox_5->value();
+    system_para_set.inhale_wait_time[1] = ui->spinBox_7->value();
+    system_para_set.inhale_wait_time[2] = ui->spinBox_11->value();
+    system_para_set.inhale_wait_time[3] = ui->spinBox_19->value();
 
-    system_para_set.exhale_time[0] = ui->spinBox_4->value();;
-    system_para_set.exhale_time[1] = ui->spinBox_8->value();;
-    system_para_set.exhale_time[2] = ui->spinBox_12->value();;
+    system_para_set.exhale_time[0] = ui->spinBox_4->value();
+    system_para_set.exhale_time[1] = ui->spinBox_8->value();
+    system_para_set.exhale_time[2] = ui->spinBox_12->value();
+    system_para_set.exhale_time[3] = ui->spinBox_20->value();
 
-    system_para_set.exhale_wait_time[0] = ui->spinBox_3->value();;
-    system_para_set.exhale_wait_time[1] = ui->spinBox_9->value();;
-    system_para_set.exhale_wait_time[2] = ui->spinBox_13->value();;
+    system_para_set.exhale_wait_time[0] = ui->spinBox_3->value();
+    system_para_set.exhale_wait_time[1] = ui->spinBox_9->value();
+    system_para_set.exhale_wait_time[2] = ui->spinBox_13->value();
+    system_para_set.exhale_wait_time[3] = ui->spinBox_21->value();
 
-    system_para_set.hale_count = ui->spinBox->value();;
+    system_para_set.hale_count = ui->spinBox->value();
 
     emit send_to_logic_system_para_set(system_para_set);
 }
@@ -468,7 +597,7 @@ void MainWindow::on_pushButton_pause_clicked()
 
 void MainWindow::on_pushButton_plot_clicked()
 {
-    qDebug() << "pause clicked()" << endl;
+    qDebug() << "plot clicked()" << endl;
 
     /* plot按钮按下时done按钮应该禁能 */
     ui->pushButton_done->setEnabled(false);
