@@ -549,13 +549,6 @@ void MainWindow::on_pushButton_al_set_clicked()
     emit send_to_logic_system_para_set(system_para_set);
 }
 
-/* 测试采集完成后使能done按钮 */
-//void MainWindow::plot_pushbutton_enable()
-//{
-//    ui->pushButton_plot->setEnabled(true);
-//    ui->pushButton_done->setEnabled(true);
-//}
-
 void MainWindow::on_pushButton_set_clicked()
 {
     qDebug() << "set_clicked()" << endl;
