@@ -37,8 +37,8 @@ unsigned int spiData[13];
 unsigned int timerData[2];
 
 /*-----------------plot-----------------*/
-//u_int16_t **p_sample_data;
-//u_int16_t **p_clear_data;
+PLOT_INFO p_sample_data;
+PLOT_INFO p_clear_data;
 
 /*********************数据处理线程*****************************/
 DataProcessThread::DataProcessThread(QObject *parent) :
@@ -46,10 +46,15 @@ DataProcessThread::DataProcessThread(QObject *parent) :
 {
     stopped = false;
 
-    plot_info.width = 1000;
+    plot_info.width = 0;
     plot_info.height = 65536;
-    plot_info.sample_count_real = 0;
-    fre_divi_fac = 1;
+    plot_info.p_data = NULL;
+
+    p_sample_data = plot_info;
+    p_clear_data = plot_info;
+
+    p_data_state = 0;//用于指针的管理，样本数据指针和清洗数据指针
+
 
     filename = NULL;
     sample_flag = false;
@@ -98,6 +103,42 @@ void DataProcessThread::run()
             else
                 qDebug("Data save error!\n");
 
+            /* 将数据文件的内容降频读取到内存块中，准备“在线绘图” */
+            plot_info.p_data = data_underclocking_write_to_mem(filename, sample.sample_freq, sample.sample_freq * sample.sample_time, &plot_info.width);
+
+            if(plot_info.p_data)//如果内存分配成功，则发送信号驱动绘图事件
+            {
+                /* 获取图例名称 */
+                plot_info.pic_name = sample.filename_prefix;
+
+                qDebug("Get memory for plot data succeed!\n");
+                p_data_state++;
+                if(p_data_state == 3)
+                {
+                    p_data_state = 1;
+                }
+
+                if(p_data_state == 1)
+                {
+                    p_sample_data = plot_info;
+                    qDebug("Get the  PLOT_INFO p_sample_data\n");
+                }
+                else if(p_data_state == 2)
+                {
+                    p_clear_data = plot_info;
+                    qDebug("Get the  PLOT_INFO p_clear_data\n");
+                }
+
+                qDebug("p_data_state = %d.\n", p_data_state);
+
+                emit send_to_PlotWidget_plotdata(plot_info);
+
+            }
+            else//分配不成功则不会触发绘图事件，点开绘图选项卡将看不到任何内容
+            {
+                qDebug("Warning: Get memory for plot data failed!\n");
+            }
+
             /* 采集数据完成后是否需要将数据绘图成pdf文件 */
             if(sample.plot_to_pdf)
             {
@@ -130,10 +171,6 @@ void DataProcessThread::run()
                 /* 发送采样完成信号给逻辑线程 */
                 emit send_to_logic_sample_done();
             }
-            else//此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能
-            {
-                emit send_to_GUI_enable_plot_pushbutton();
-            }
 
             sample_flag = false;
         }
@@ -141,6 +178,14 @@ void DataProcessThread::run()
     }
     /* 线程退出前关闭PRU */
     prussdrv_exit ();
+
+    if(p_sample_data.p_data)
+        free(p_sample_data.p_data);
+    p_sample_data.p_data = NULL;
+
+    if(p_clear_data.p_data)
+        free(p_clear_data.p_data);
+    p_clear_data.p_data = NULL;
 
     stopped = false;
     qDebug("DataProcessThread done!\n");
@@ -491,3 +536,118 @@ void DataProcessThread::plot2pdf()
         qDebug("This plot task has been added into plot2pdf_task_file.txt, it will be executed later!\n");
     }
 }
+
+/* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
+void DataProcessThread::recei_from_logic_reset_memory()
+{
+    if(p_sample_data.p_data)
+        free(p_sample_data.p_data);
+    if(p_clear_data.p_data)
+        free(p_clear_data.p_data);
+
+    plot_info.width = 0;
+    plot_info.height = 65536;
+    plot_info.p_data = NULL;
+
+    p_sample_data = plot_info;
+    p_clear_data = plot_info;
+
+    emit send_to_PlotWidget_plotdata(plot_info);
+}
+
+/* 将数据文件的内容降频读取到内存块中，准备“在线绘图”
+ * char *data_filename      数据文件来源
+ * float data_sample_freq	原数据采样频率，如果单通道大于1KHz，则需要降频至1KHz，小于1KHz，则不需要降频
+ * int data_sample_count	原数据采样总数，函数将会根据分频因子对数据进行截取
+ * int &plot_info_width     记录数据行数
+ * 函数返回一个二维内存块指针
+ */
+unsigned int** data_underclocking_write_to_mem(char *data_filename, float data_sample_freq, int data_sample_count, long *plot_info_width)
+{
+    float expect_plot_sample_freq = 100.0;//期望的数据绘图频率
+    int fre_divi_fac = 1;
+    unsigned int i;
+    int data_num = 0;
+    unsigned int **temp_p_data;
+    unsigned int temp_data[10];
+    FILE *fp;
+
+    unsigned int lines = (data_sample_count / fre_divi_fac) / 10;
+
+    /* 从文件online_plot_fre.txt读取期望的数据绘图频率 */
+    if((fp = fopen(ONLINE_PLOT_FRE, "r")) != NULL)
+    {
+        fscanf(fp, "online_plot_fre = %fHz\n", &expect_plot_sample_freq);
+        fclose(fp);
+        fp = NULL;
+        qDebug("online_plot_fre = %fHz\n", expect_plot_sample_freq);
+    }
+    else
+    {
+        qDebug("cann't open the online_plot_fre.txt, use the plot fre (100Hz) parameter in program.\n");
+    }
+
+    /* 计算分频因子 */
+    if(data_sample_freq > (10 * expect_plot_sample_freq))//如果数据采集频率单通道超过1KHz，那么“在线绘图”需要对数据降频后再绘图
+        fre_divi_fac = data_sample_freq / (10 * expect_plot_sample_freq);
+    else//不进行降频
+        fre_divi_fac = 1;
+
+    qDebug("fre_divi_fac = %d\n", fre_divi_fac);
+
+    /* 计算存储空间 */
+    temp_p_data = (unsigned int **)malloc(sizeof(unsigned int *) * lines);//数据行数
+    if(temp_p_data)//指针判断
+    {
+        for(i = 0; i < lines; i++)
+        {
+            temp_p_data[i] = (unsigned int *)malloc(sizeof(unsigned int) * 10);
+            memset(temp_p_data[i], 0, sizeof(unsigned int) * 10);//将分配的内存空间初始化为0
+        }
+    }
+    else//分配失败则直接返回空指针
+    {
+        qDebug("Get memory failed!\n");
+        return NULL;
+    }
+
+    data_num = 0;
+    *plot_info_width = 0;
+    if((fp = fopen(data_filename, "r")) != NULL)
+    {
+        while(!feof(fp))
+        {
+            fscanf(fp, "%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%d\n", &temp_data[0], &temp_data[1], &temp_data[2], &temp_data[3], &temp_data[4], &temp_data[5], &temp_data[6], &temp_data[7], &temp_data[8], &temp_data[9]);
+
+            if(data_num % fre_divi_fac == 0)
+            {
+                temp_p_data[*plot_info_width][0] = temp_data[0];
+                temp_p_data[*plot_info_width][1] = temp_data[1];
+                temp_p_data[*plot_info_width][2] = temp_data[2];
+                temp_p_data[*plot_info_width][3] = temp_data[3];
+                temp_p_data[*plot_info_width][4] = temp_data[4];
+                temp_p_data[*plot_info_width][5] = temp_data[5];
+                temp_p_data[*plot_info_width][6] = temp_data[6];
+                temp_p_data[*plot_info_width][7] = temp_data[7];
+                temp_p_data[*plot_info_width][8] = temp_data[8];
+                temp_p_data[*plot_info_width][9] = temp_data[9];
+
+                (*plot_info_width)++;
+            }
+            data_num++;
+        }
+
+        qDebug("plot_info_width = %ld\n", *plot_info_width);
+
+        fclose(fp);
+        fp = NULL;
+
+        return temp_p_data;//返回二维内存快指针
+    }
+    else
+    {
+        qDebug("read data from %s to **p_data failed!\n", data_filename);
+        return NULL;
+    }
+}
+

@@ -1237,20 +1237,20 @@
        <rect>
         <x>300</x>
         <y>180</y>
-        <width>61</width>
+        <width>41</width>
         <height>21</height>
        </rect>
       </property>
       <property name="text">
-       <string>plot</string>
+       <string>plot1</string>
       </property>
      </widget>
      <widget class="QPushButton" name="pushButton_done">
       <property name="geometry">
        <rect>
-        <x>370</x>
+        <x>390</x>
         <y>180</y>
-        <width>51</width>
+        <width>61</width>
         <height>21</height>
        </rect>
       </property>
@@ -1311,6 +1311,19 @@
         </widget>
        </item>
       </layout>
+     </widget>
+     <widget class="QPushButton" name="pushButton_plot_2">
+      <property name="geometry">
+       <rect>
+        <x>340</x>
+        <y>180</y>
+        <width>41</width>
+        <height>21</height>
+       </rect>
+      </property>
+      <property name="text">
+       <string>plot2</string>
+      </property>
      </widget>
     </widget>
    </widget>

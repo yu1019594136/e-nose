@@ -28,7 +28,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 实例化一个tab页用于绘图 */
     plot_widget = new Plot_Widget(this);
-    ui->Qtabwidget->addTab(plot_widget, "data plot");
+    ui->Qtabwidget->addTab(plot_widget, "plot data");
 
     /* 从item_file.txt中读取条目添加到UI的comboBox */
     QString temp;
@@ -247,7 +247,13 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     connect(this, SIGNAL(send_to_logic_user_button_action(USER_BUTTON_ENABLE)), logic_thread, SLOT(recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE)), Qt::QueuedConnection);
 
     /* 此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能 */
-    connect(dataprocess_thread, SIGNAL(send_to_GUI_enable_plot_pushbutton()), this, SLOT(plot_pushbutton_enable()), Qt::QueuedConnection);
+//    connect(dataprocess_thread, SIGNAL(send_to_GUI_enable_plot_pushbutton()), this, SLOT(plot_pushbutton_enable()), Qt::QueuedConnection);
+
+    /* 用户通过点击plot1和plot2来选择绘制哪个数据 */
+    connect(this, SIGNAL(send_to_plot_widget(int)), plot_widget, SLOT(recei_fro_GUI_PLOT_DATA_TYPE(int)), Qt::QueuedConnection);
+
+    /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
+    connect(logic_thread, SIGNAL(send_to_dataproc_reset_memory()), dataprocess_thread, SLOT(recei_from_logic_reset_memory()), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -309,6 +315,7 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
     ui->pushButton_clear_2->setEnabled(false);
     ui->pushButton_pause->setEnabled(false);
     ui->pushButton_plot->setEnabled(false);
+    ui->pushButton_plot_2->setEnabled(false);
     ui->pushButton_done->setEnabled(false);
 
     user_button_enable.mode = UNSET;
@@ -440,35 +447,44 @@ void MainWindow::recei_fro_logic_pushButton_state(PUSHBUTTON_STATE pushButton_st
 /* user按钮使能计时开始 */
 void MainWindow::recei_fro_logic_user_buttton_enable(USER_BUTTON_ENABLE user_button_enable_para)
 {
-    if(user_button_enable_para.mode == SET_BUTTON)
+    if(user_button_enable_para.mode == SET_BUTTON_ENABLE_T)//set按钮按下后使能10s
     {
         pushButton_enable_timer->start(user_button_enable_para.enable_time * 1000);
         ui->pushButton_set->setEnabled(true);
-        qDebug() << "set pushbutton timer start" << endl;
+        qDebug() << "set pushbutton timer start, " << endl;
     }
-    else if(user_button_enable_para.mode == OPEN_BUTTON)
+    else if(user_button_enable_para.mode == OPEN_BUTTON_ENABLE)//恒温完成，逻辑线程发送信号给GUI线程使能open按钮
     {
         ui->pushButton_open->setEnabled(true);
         qDebug() << "open pushbutton enabled" << endl;
     }
-    else if(user_button_enable_para.mode == CLEAR_BUTTON)
+    else if(user_button_enable_para.mode == CLEAR_BUTTON_ENABLE)//清洗完成后，逻辑线程发送信号给GUI线程使能clear、禁能pause、使能done按钮
     {
         ui->pushButton_clear_2->setEnabled(true);
         ui->pushButton_pause->setEnabled(false);
-        ui->pushButton_plot->setEnabled(true);
         ui->pushButton_done->setEnabled(true);
-        qDebug() << "clear pause plot done pushbutton enabled" << endl;
+        qDebug() << "clear pause plot1/plot2 done pushbutton enabled" << endl;
     }
-    else if(user_button_enable_para.mode == PLOT_BUTTON)
+    else if(user_button_enable_para.mode == PLOT1_ENABLE_PLOT2_DISABLE)//反应室清洗完成后，逻辑线程发送信号, plot1使能，plot2禁能，且此时绘图选项卡绘制清洗数据
+    {
+        ui->pushButton_plot->setEnabled(true);
+        ui->pushButton_plot_2->setEnabled(false);
+        qDebug() << "plot1 pushbutton enabled" << endl;
+        qDebug() << "plot2 pushbutton disabled" << endl;
+        qDebug() << "plot clear data" << endl;
+    }
+    else if(user_button_enable_para.mode == PLOT1_DISABLE_PLOT2_DISABLE)
     {
         ui->pushButton_plot->setEnabled(false);
-        qDebug() << "plot pushbutton disabled" << endl;
+        ui->pushButton_plot_2->setEnabled(false);
+        qDebug() << "plot1 pushbutton disabled" << endl;
+        qDebug() << "plot2 pushbutton disabled" << endl;
+        qDebug() << "plot no data!" << endl;
     }
-    else if(user_button_enable_para.mode == UNSET)//点击done按钮后，禁能clear、pause、plot、done四个按钮
+    else if(user_button_enable_para.mode == UNSET)//点击done按钮后，禁能clear、pause、done按钮
     {
         ui->pushButton_clear_2->setEnabled(false);
         ui->pushButton_pause->setEnabled(false);
-        ui->pushButton_plot->setEnabled(false);
         ui->pushButton_done->setEnabled(false);
     }
 
@@ -534,18 +550,19 @@ void MainWindow::on_pushButton_al_set_clicked()
 }
 
 /* 测试采集完成后使能done按钮 */
-void MainWindow::plot_pushbutton_enable()
-{
-    ui->pushButton_plot->setEnabled(true);
-    ui->pushButton_done->setEnabled(true);
-}
+//void MainWindow::plot_pushbutton_enable()
+//{
+//    ui->pushButton_plot->setEnabled(true);
+//    ui->pushButton_done->setEnabled(true);
+//}
 
 void MainWindow::on_pushButton_set_clicked()
 {
     qDebug() << "set_clicked()" << endl;
 
-    /* set按钮使能计时停止 */
-    pushButton_enable_timer->stop();
+    /* set按钮使能计时, 如果计时器还在计时，则停止计时器 */
+    if(pushButton_enable_timer->isActive())
+        pushButton_enable_timer->stop();
 
     /* 点击设置按钮后跳至参数设定选项卡 */
     ui->Qtabwidget->setCurrentIndex(2);
@@ -561,7 +578,7 @@ void MainWindow::on_pushButton_open_clicked()
 
     ui->pushButton_open->setEnabled(false);
     ui->pushButton_close->setEnabled(true);
-    user_button_enable.mode = OPEN_BUTTON;
+    user_button_enable.mode = OPEN_BUTTON_CLICKED;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 
@@ -570,7 +587,7 @@ void MainWindow::on_pushButton_close_clicked()
     qDebug() << "close clicked()" << endl;
 
     ui->pushButton_close->setEnabled(false);
-    user_button_enable.mode = CLOSE_BUTTON;
+    user_button_enable.mode = CLOSE_BUTTON_CLICKED;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 void MainWindow::on_pushButton_clear_2_clicked()
@@ -580,7 +597,7 @@ void MainWindow::on_pushButton_clear_2_clicked()
     ui->pushButton_clear_2->setEnabled(false);
     ui->pushButton_pause->setEnabled(true);
 
-    user_button_enable.mode = CLEAR_BUTTON;
+    user_button_enable.mode = CLEAR_BUTTON_CLICKED;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 
@@ -591,28 +608,49 @@ void MainWindow::on_pushButton_pause_clicked()
     ui->pushButton_clear_2->setEnabled(true);
     ui->pushButton_pause->setEnabled(false);
 
-    user_button_enable.mode = PAUSE_BUTTON;
+    user_button_enable.mode = PAUSE_BUTTON_CLICKED;
     emit send_to_logic_user_button_action(user_button_enable);
 }
 
 void MainWindow::on_pushButton_plot_clicked()
 {
-    qDebug() << "plot clicked()" << endl;
+    qDebug() << "plot1 clicked()" << endl;
+    ui->pushButton_plot->setEnabled(false);
+    ui->pushButton_plot_2->setEnabled(true);
+    qDebug() << "plot sample data" << endl;
+//    user_button_enable.mode = PLOT1_BUTTON_CLICKED;
+//    emit send_to_logic_user_button_action(user_button_enable);
 
-    /* plot按钮按下时done按钮应该禁能 */
-    ui->pushButton_done->setEnabled(false);
+    /* 发送信号给plot_Widget对象，开始执行绘图 */
+    emit send_to_plot_widget(SAMPLE_DATA);
 
-    user_button_enable.mode = PLOT_BUTTON;
-    emit send_to_logic_user_button_action(user_button_enable);
+    /* 点击plot1按钮后跳至绘图选项卡 */
+    ui->Qtabwidget->setCurrentIndex(5);
 }
 
+void MainWindow::on_pushButton_plot_2_clicked()
+{
+    qDebug() << "plot2 clicked()" << endl;
+    ui->pushButton_plot->setEnabled(true);
+    ui->pushButton_plot_2->setEnabled(false);
+    qDebug() << "plot clear data" << endl;
+//    user_button_enable.mode = PLOT2_BUTTON_CLICKED;
+//    emit send_to_logic_user_button_action(user_button_enable);
+
+    /* 发送信号给plot_Widget对象，开始执行绘图 */
+    emit send_to_plot_widget(CLEAR_DATA);
+
+    /* 点击plot2按钮后跳至绘图选项卡 */
+    ui->Qtabwidget->setCurrentIndex(5);
+}
 void MainWindow::on_pushButton_done_clicked()
 {
     qDebug() << "done clicked()" << endl;
 
-    user_button_enable.mode = DONE_BUTTON;
+    user_button_enable.mode = DONE_BUTTON_CLICKED;
     emit send_to_logic_user_button_action(user_button_enable);
 }
+
 
 void MainWindow::on_pushButton_clear_current_clicked()
 {

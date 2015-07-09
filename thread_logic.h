@@ -85,6 +85,9 @@ signals:
     /* set按钮使能计时开始 */
     void send_to_GUI_user_buttton_enable(USER_BUTTON_ENABLE user_button_enable_para);
 
+    /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
+    void send_to_dataproc_reset_memory();
+
 public slots:
     /* 处理来自硬件线程预热完成的信号 */
     void recei_fro_hardware_preheat_done();

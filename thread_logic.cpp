@@ -63,6 +63,9 @@ LogicControlThread::LogicControlThread(QObject *parent) :
         qDebug("Warning: can't find the initial_state.txt, use the para in program");
     }
 
+//    system_state = DEBUG;
+//    operation_flag.standby_flag =       UN_SET;
+//    operation_flag.preheat_flag =       AL_SET;
 
     operation_flag.evaporation_flag =   AL_SET;
     operation_flag.thermo_flag =        AL_SET;
@@ -217,7 +220,7 @@ void LogicControlThread::run()
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 通知GUI线程使能set按钮5s */
-                user_button_enable.mode = SET_BUTTON;
+                user_button_enable.mode = SET_BUTTON_ENABLE_T;
                 user_button_enable.enable_time = 10;//单位s, 5s
                 emit send_to_GUI_user_buttton_enable(user_button_enable);
 
@@ -253,7 +256,7 @@ void LogicControlThread::run()
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
                 /* 通知GUI线程使能open按钮 */
-                user_button_enable.mode = OPEN_BUTTON;
+                user_button_enable.mode = OPEN_BUTTON_ENABLE;
                 user_button_enable.enable_time = 0;
                 emit send_to_GUI_user_buttton_enable(user_button_enable);
 
@@ -309,6 +312,15 @@ void LogicControlThread::run()
         {
             if(operation_flag.sampling_flag == UN_SET)
             {
+                /* 采样开始之前，应该先禁能plot1和plot2按钮，因为数据处理线程中的两块内存必须先释放在重新申请，以存放新的数据，
+                 * 同时，此时的绘图选项卡点开后不会有绘图事件 */
+                user_button_enable.mode = PLOT1_DISABLE_PLOT2_DISABLE;
+                user_button_enable.enable_time = 0;
+                emit send_to_GUI_user_buttton_enable(user_button_enable);
+
+                /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
+                emit send_to_dataproc_reset_memory();
+
                 pushButton_state.pushButton_standby = true;
                 pushButton_state.pushButton_preheat = true;
                 pushButton_state.pushButton_thermo = true;
@@ -713,6 +725,11 @@ void LogicControlThread::close_pump_and_reac()
 
             qDebug() << "reac clear done!" << endl;
 
+            /* 反应室清洗完成后，逻辑线程发送信号, plot1使能，plot2禁能，且此时绘图选项卡绘制清洗数据 */
+            user_button_enable.mode = PLOT1_ENABLE_PLOT2_DISABLE;
+            user_button_enable.enable_time = 0;
+            emit send_to_GUI_user_buttton_enable(user_button_enable);
+
             clear_state_change = true;
         }
         else if(clear_state == 2)
@@ -725,8 +742,8 @@ void LogicControlThread::close_pump_and_reac()
 
             qDebug() << "evapor clear done!" << endl;
 
-            /* 清洗阶段完成后,通知GUI线程使能clear按钮 */
-            user_button_enable.mode = CLEAR_BUTTON;
+            /* 清洗阶段完成后,通知GUI线程使能clear一行的五个按钮 */
+            user_button_enable.mode = CLEAR_BUTTON_ENABLE;
             user_button_enable.enable_time = 0;
             emit send_to_GUI_user_buttton_enable(user_button_enable);
 
@@ -757,7 +774,7 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
 
     read_para_flag = true;
 
-    int i = 0;
+    unsigned int i = 0;
 
     qDebug() << "system_para_set.preset_temp = " << system_para_set.preset_temp << endl;
     qDebug() << "system_para_set.hold_time = " << system_para_set.hold_time << endl;
@@ -818,18 +835,18 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
     fp_para = NULL;
 }
 
-/* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
+/* 逻辑线程回应用户对界面按钮的操作 */
 void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE user_button_enable_para)
 {
-    if(user_button_enable_para.mode == OPEN_BUTTON)
+    if(user_button_enable_para.mode == OPEN_BUTTON_CLICKED)
     {
         open_clicked_flag = true;
     }
-    else if(user_button_enable_para.mode == CLOSE_BUTTON)
+    else if(user_button_enable_para.mode == CLOSE_BUTTON_CLICKED)
     {
         close_clicked_flag = true;
     }
-    else if(user_button_enable_para.mode == CLEAR_BUTTON)
+    else if(user_button_enable_para.mode == CLEAR_BUTTON_CLICKED)
     {
         /* 打开清洗气路 */
         //magnetic_para.M1 = HIGH;
@@ -847,35 +864,29 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
         pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
         emit send_to_hard_pump(pump_para);
     }
-    else if(user_button_enable_para.mode == PAUSE_BUTTON)
+    else if(user_button_enable_para.mode == PAUSE_BUTTON_CLICKED)
     {
         /* 关闭气泵清洗 */
         pump_para.pump_switch = LOW;
         pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
         emit send_to_hard_pump(pump_para);
     }
-    else if(user_button_enable_para.mode == PLOT_BUTTON)
-    {
-//        /* 采样绘图 */
-//        sample_para.sample_freq = 60;//单位Hz,每个通道的采样频率
-//        sample_para.sample_time = 60;//单位s, 每个通道的采样时间长度
-//        sample_para.filename_prefix = "clear_test";//数据文件路径以及文件名前缀,
-//        sample_para.sample_inform_flag = false;//不要通知，否则扰乱循环
-//        emit send_to_dataproc_sample(sample_para);
+//    else if(user_button_enable_para.mode == PLOT1_BUTTON_CLICKED)
+//    {
 
-//        /* 通知GUI线程禁能plot按钮 */
-//        user_button_enable.mode = PLOT_BUTTON;
-//        user_button_enable.enable_time = 0;//采样绘图时间结束后，数据处理线程将发送信号给GUI线程将plot使能
-//        emit send_to_GUI_user_buttton_enable(user_button_enable);
-    }
-    else if(user_button_enable_para.mode == DONE_BUTTON)
+//    }
+//    else if(user_button_enable_para.mode == PLOT2_BUTTON_CLICKED)
+//    {
+
+//    }
+    else if(user_button_enable_para.mode == DONE_BUTTON_CLICKED)
     {
         /* 关闭气泵，安保措施：点击done时气泵可能还在运行 */
         pump_para.pump_switch = LOW;
         pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
         emit send_to_hard_pump(pump_para);
 
-        /* 点击done按钮后，禁能clear、pause、plot、done四个按钮 */
+        /* 点击done按钮后，禁能clear、pause、done三个按钮 */
         user_button_enable.mode = UNSET;
         user_button_enable.enable_time = 0;
         emit send_to_GUI_user_buttton_enable(user_button_enable);

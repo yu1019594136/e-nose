@@ -1,10 +1,12 @@
 #include <QPainter>
 #include <QDebug>
+#include <qcommon.h>
 #include "plot_widget.h"
+#include <QImage>
 
-/* 该变量在数据处理线程的实现文件中声明 */
-extern u_int16_t **p_sample_data;
-extern u_int16_t **p_clear_data;
+/*-----------------plot-----------------*/
+extern PLOT_INFO p_sample_data;
+extern PLOT_INFO p_clear_data;
 
 Plot_Widget::Plot_Widget(QWidget *parent)
 {
@@ -44,71 +46,94 @@ Qt::color1      1           1 pixel value (for bitmaps)
     color[9] = Qt::darkRed;
 
     /* 默认情况下，横坐标和纵坐标等于屏幕的宽、高像素点 */
-    plot_width = 1000;
-    plot_height = 65536;
-    sample_count_real = 0;
+    plot_para.height = 65536;
+    plot_para.width = 1000;
+    plot_para.p_data = NULL;
 }
 
 void Plot_Widget::recei_fro_datapro_dataplot(PLOT_INFO plot_info)
 {
-    /* 更新绘图尺寸 */
-//    plot_width = plot_info.width;
-//    plot_height = plot_info.height;
-//    sample_count_real = plot_info.sample_count_real;
+    plot_para = plot_info;
 
-//    /* 没有数据或者没有采样时不应该进行绘图，否则程序会运行出错 */
-//    if(p_data && sample_count_real)
-//        update();
+    /* 指针为空时不应该进行绘图，否则程序会运行出错 */
+    if(plot_para.p_data)
+        update();
+    else
+    {
+        qDebug("plot_para.p_data = NULL, plot operation was cancled!\n");
+    }
+}
+
+/* 用户通过点击plot1和plot2来选择绘制哪个数据 */
+void Plot_Widget::recei_fro_GUI_PLOT_DATA_TYPE(int plot_data_type)
+{
+    if(plot_data_type == SAMPLE_DATA)
+        plot_para = p_sample_data;
+    else if(plot_data_type == CLEAR_DATA)
+        plot_para = p_clear_data;
+
+    /* 指针为空时不应该进行绘图，否则程序会运行出错 */
+    if(plot_para.p_data)
+        update();
+    else
+    {
+        qDebug("plot_para.p_data = NULL, plot operation was cancled!\n");
+    }
 }
 
 void Plot_Widget::paintEvent(QPaintEvent *event)
 {
-//    int i;
-//    int j;
-//    long x_axis = 0;
+    int i;
+    int j;
 
     QPainter painter(this);
 
-//    qDebug() << "height = " << qMin(width(),height()) << endl;
-//    qDebug() << "width = " << qMax(width(),height()) << endl;
+    /* 开机时候有可能点开绘图选项卡，此时会执行绘图事件，所以绘图时间函数中也应该对指针进行判断 */
+    if(plot_para.p_data)
+    {
+/*
+("Bitstream Charter", "Clean", "Clearlyu", "Clearlyu Alternate Glyphs", "Clearlyu Arabic",
+"Clearlyu Arabic Extra", "Clearlyu Devanagari", "Clearlyu Devangari Extra", "Clearlyu Ligature",
+"Clearlyu Pua", "Courier 10 Pitch", "Fangsong Ti", "Fixed [Jis]", "Fixed [Misc]", "Fixed [Sony]",
+"Gothic", "Mincho", "Newspaper", "Nil", "Song Ti", "Standard Symbols L")
 
-    /* 开启抗锯齿效果 */
-    //painter.setRenderHint(QPainter::Antialiasing);
+*/
+        /* 先画数据文件名称，在转换坐标 */
+        QRect rect(10, 10, 460, 20);
+        QFont font("Clearlyu", 12);
+        painter.setFont(font);
+        painter.drawText(rect, Qt::AlignHCenter, plot_para.pic_name.remove(SYS_FILE_PATH));
 
-    /* 画坐标轴 */
-//    painter.drawLine(QPoint(0, 0), QPoint(1000, 0));
-//    painter.drawLine(QPoint(0, 0), QPoint(0, -65535));
+        /* 设置视口（逻辑坐标） */
+        painter.setWindow(0, 0, plot_para.width, plot_para.height);
+        /* 坐标系平移 */
+        painter.translate(0, plot_para.height);
 
-//    /* 设置视口（逻辑坐标） */
-//    painter.setWindow(-plot_width/2, -plot_height/2, plot_width, plot_height);
+        qDebug("plot_para.height = %ld, plot_para.width = %ld\n", plot_para.height, plot_para.width);
 
-//    /* 坐标系平移,将y值取负号 */
-//    painter.translate(-plot_width/2, plot_height/2);
+        for(i = 0; i < 10; i++)
+        {
+            painter.setPen(QPen(color[i]));
 
-//    if(sample_count_real && sample_count_real < plot_width)
-//    {
-//        for(j = 0; j < 10; j++)
-//        {
-//            painter.setPen(QPen(color[j]));
+            for(j = 0; j < plot_para.width; j++)
+            {
+                painter.drawPoint(j, -plot_para.p_data[j][i]);
+            }
+        }
+    }
+    else
+    {
+        qDebug("plot_para.p_data = NULL, cann't plot!\n");
 
-//            for(i = 0; i < sample_count_real; i++)
-//            {
-//                painter.drawPoint(i, -p_data[i][j]);
-//            }
-//        }
-//    }
-//    else if(sample_count_real)
-//    {
-//        for(j = 0; j < 10; j++)
-//        {
-//            painter.setPen(QPen(color[j]));
+        /* 不显示数据时，显示一张图片 */
+        QImage pic;
 
-//            for(i = sample_count_real - plot_width; i < sample_count_real; i++)
-//            {
-//                painter.drawPoint(x_axis++, -p_data[i][j]);
-//            }
-//            x_axis = 0;
-//        }
-//    }
+        if(pic.load(QString(E_NOSE_LOGO)))
+        {
+            qDebug() << "picture size:" << pic.size() << endl;
+            painter.drawImage(QPoint(30, 30), pic);
+        }
 
+
+    }
 }

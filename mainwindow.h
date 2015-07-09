@@ -29,6 +29,9 @@ signals:
     /* 用户在系统操作面板按下按钮后应该通知逻辑线程产生动作 */
     void send_to_logic_user_button_action(USER_BUTTON_ENABLE user_button_enable_para);
 
+    /* 用户通过点击plot1和plot2来选择绘制哪个数据 */
+    void send_to_plot_widget(int plot_data_type);
+
 private slots:
     void on_Quit_Button_clicked();//用于退出程序
 
@@ -54,7 +57,9 @@ private slots:
 
     void on_pushButton_done_clicked();
 
-    void plot_pushbutton_enable();
+//    void plot_pushbutton_enable();
+
+    void on_pushButton_plot_2_clicked();
 
 public slots:
     /* 接收硬件线程发送来的实时温湿度数据 */

@@ -4,12 +4,14 @@
 #include <QString>
 
 /* 程序运行是所需要的一些配置文件存放路径 */
+#define SYS_FILE_PATH               "/root/qt_program/"
 #define ITEM_FILE_PATH              "/root/qt_program/item_file.txt"
 #define DEFAULT_CONFIG_PARA_PATH    "/root/qt_program/default_config_para.txt"
 #define INITIAL_STATE               "/root/qt_program/initial_state.txt"
 #define PLOT_SCRIPT                 "/root/qt_program/plot.sh"
 #define PLOT_TASK_FILE              "/root/qt_program/plot2pdf_task_file.txt"
-#define QUERY_PLOT_TASK_FILE        "query plot task file"
+#define E_NOSE_LOGO                 "/root/qt_program/E-nose_Logo.png"
+#define ONLINE_PLOT_FRE             "/root/qt_program/online_plot_fre.txt"
 
 typedef struct{
     int thermo_switch;//加热带电路开关，HIGH? LOW?
@@ -26,7 +28,8 @@ enum SYSTEM_STATE{
     EVAPORATION,    //蒸发
     SAMPLING,       //采样
     CLEAR,          //清洗
-    QUIT            //退出
+    QUIT,           //退出
+    DEBUG           //调试模式
 };
 
 typedef struct{
@@ -83,6 +86,11 @@ enum FLAG_STATUS{
     AL_SET
 };
 
+enum PLOT_DATA_TYPE{
+    SAMPLE_DATA = 0,//缺省设置状态
+    CLEAR_DATA
+};
+
 typedef struct{
     bool pushButton_standby;
     bool pushButton_preheat;
@@ -98,17 +106,36 @@ typedef struct{
 } USER_BUTTON_ENABLE;
 
 enum BUTTON_MODE{
-    SET_BUTTON = 0,    //使能set按钮
+    SET_BUTTON_CLICKED = 0,    //使能set按钮
+    SET_BUTTON_ENABLE_T,
 
-    OPEN_BUTTON,       //使能open按钮
-    CLOSE_BUTTON,      //
+    OPEN_BUTTON_ENABLE,
+    OPEN_BUTTON_CLICKED,       //使能open按钮
 
-    CLEAR_BUTTON,      //使能clear按钮
-    CLEAR_BUTTON_DISABLE,
-    PAUSE_BUTTON,
-    PLOT_BUTTON,
-    DONE_BUTTON,
+    CLOSE_BUTTON_CLICKED,      //
+
+    CLEAR_BUTTON_CLICKED,      //使能clear按钮
+    CLEAR_BUTTON_ENABLE,
+
+    PAUSE_BUTTON_CLICKED,
+
+    PLOT1_BUTTON_CLICKED,
+
+    PLOT1_ENABLE_PLOT2_DISABLE,
+    PLOT1_DISABLE_PLOT2_DISABLE,
+
+    PLOT2_BUTTON_CLICKED,
+
+    DONE_BUTTON_CLICKED,
 
     UNSET      //缺省设置状态
 };
+
+typedef struct{
+    long width;
+    long height;
+    unsigned int **p_data;
+    QString pic_name;
+} PLOT_INFO;
+
 #endif // QCOMMON_H

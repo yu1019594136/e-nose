@@ -87,8 +87,9 @@ protected:
 private:
     volatile bool stopped;
     SAMPLE sample;//采样控制参数
+
     PLOT_INFO plot_info;//绘图尺寸
-    int fre_divi_fac;//数据绘图分频因子
+    int p_data_state;//用于指针的管理，样本数据指针和清洗数据指针
 
     char *filename;
     QByteArray ba;
@@ -103,7 +104,7 @@ signals:
     void send_to_logic_sample_done();
 
     /* 此种情况不需要返回信号，系统操作面板中的plot按钮在采集完后需要被使能 */
-    void send_to_GUI_enable_plot_pushbutton();
+//    void send_to_GUI_enable_plot_pushbutton();
 
     /* 发送信号驱使槽函数绘图pdf文件 */
     void send_to_plot2pdf();
@@ -111,6 +112,9 @@ signals:
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */
     void recei_fro_logic_sample(SAMPLE sample_para);
+
+    /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
+    void recei_from_logic_reset_memory();
 
 private slots:
 
@@ -134,5 +138,15 @@ void PRU_init_loadcode();
 
 /* 保存数据到文件 */
 int save_data_to_file(char * filename, unsigned int numberOutputSamples);
+
+/* 将数据文件的内容降频读取到内存块中，准备“在线绘图”
+ * char *data_filename      数据文件来源
+ * float data_sample_freq	原数据采样频率，如果单通道大于1KHz，则需要降频至1KHz，小于1KHz，则不需要降频
+ * int data_sample_count	原数据采样总数，函数将会根据分频因子对数据进行截取
+ * int &plot_info_width     记录数据行数
+ * 函数返回一个二维内存块指针
+ */
+
+unsigned int** data_underclocking_write_to_mem(char *data_filename, float data_sample_freq, int data_sample_count, long *plot_info_width);
 
 #endif // THREAD_DATA_PROC_H
