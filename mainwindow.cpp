@@ -360,6 +360,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::on_Quit_Button_clicked()
 {
+    FILE *fp;
+    int shutdown_flag = 0;
+    unsigned int timeout = 5;//关机倒计时
+
     /* 将活跃状态的线程关闭 */
     if(logic_thread->isRunning())
         logic_thread->stop();
@@ -374,7 +378,29 @@ void MainWindow::on_Quit_Button_clicked()
     while(!hardware_thread->isFinished());
 
     /* 5s内应用程序关机 */
-//    Application_quit(5);
+    if((fp = fopen(QUIT_EQUAL_SHUTDOWN, "r")) != NULL)
+    {
+        fscanf(fp, "shutdown = %d\n", &shutdown_flag);
+        fscanf(fp, "timeout = %d\n", &timeout);
+
+        if(shutdown_flag == 1)
+        {
+            Application_quit(timeout);
+            qDebug("Apllication quits right now!\n");
+            qDebug("System will be shutdown in %d seconds!\n", timeout);
+        }
+        else
+        {
+            qDebug("Apllication quits right now!\n");
+            qDebug("Shutdown the system by yourself.\n");
+        }
+        fclose(fp);
+        fp = NULL;
+    }
+    else
+    {
+        qDebug("Warning: cann't find the quit_equal_shutdown.txt, use the parameter in program.\n");
+    }
 
     /* 退出事件循环，结束程序 */
     QApplication *p;
@@ -548,6 +574,13 @@ void MainWindow::on_pushButton_al_set_clicked()
 
     emit send_to_logic_system_para_set(system_para_set);
 }
+
+/* 测试采集完成后使能done按钮 */
+//void MainWindow::plot_pushbutton_enable()
+//{
+//    ui->pushButton_plot->setEnabled(true);
+//    ui->pushButton_done->setEnabled(true);
+//}
 
 void MainWindow::on_pushButton_set_clicked()
 {

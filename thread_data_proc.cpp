@@ -297,8 +297,8 @@ void PRU_init_loadcode()
     prussdrv_pru_write_memory(PRUSS0_PRU1_DATARAM, 0, timerData, sizeof(timerData)); // sample clock
 
     // Load and execute the PRU program on the PRU
-    prussdrv_exec_program (ADC_PRU_NUM, "./PRUADC.bin");
-    prussdrv_exec_program (CLK_PRU_NUM, "./PRUClock.bin");
+    prussdrv_exec_program (ADC_PRU_NUM, PRUADC_BIN);
+    prussdrv_exec_program (CLK_PRU_NUM, PRUClock_BIN);
     qDebug("EBBClock PRU1 program now running (%d )\n", timerData[0]);
 
     // Wait for event completion from PRU, returns the PRU_EVTOUT_0 number

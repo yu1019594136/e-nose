@@ -12,6 +12,9 @@
 #define PLOT_TASK_FILE              "/root/qt_program/plot2pdf_task_file.txt"
 #define E_NOSE_LOGO                 "/root/qt_program/E-nose_Logo.png"
 #define ONLINE_PLOT_FRE             "/root/qt_program/online_plot_fre.txt"
+#define QUIT_EQUAL_SHUTDOWN         "/root/qt_program/quit_equal_shutdown.txt"
+#define PRUADC_BIN                  "/root/qt_program/PRUADC.bin"
+#define PRUClock_BIN                "/root/qt_program/PRUClock.bin"
 
 typedef struct{
     int thermo_switch;//加热带电路开关，HIGH? LOW?

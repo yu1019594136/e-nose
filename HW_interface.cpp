@@ -132,7 +132,7 @@ void M4_Switch(int Switch)
     gpio_set_value(&gpio68_M4,Switch);
 }
 
-void Application_quit(int seconds)
+void Application_quit(unsigned int seconds)
 {
     pid_t new_pid;
     char *const arg_shutdown[] = {"shutdown","-h","now",NULL};

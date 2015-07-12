@@ -19,7 +19,7 @@ void M4_Switch(int Switch);
 void get_realtime_info(GUI_REALTIME_INFO *realtime_info);
 
 /* 退出应用程序，并启动关机进程 */
-void Application_quit(int seconds);
+void Application_quit(unsigned int seconds);
 
 /* 操作结束前，
  * 关闭各个功能硬件电路，恢复系统配置；
