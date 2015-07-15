@@ -109,6 +109,9 @@ signals:
     /* 发送信号驱使槽函数绘图pdf文件 */
     void send_to_plot2pdf();
 
+    /* 如果绘图进程出错，则将其终止 */
+    void terminate_plot_process();
+
 public slots:
     /* 处理来自逻辑线程的采样控制信号 */
     void recei_fro_logic_sample(SAMPLE sample_para);

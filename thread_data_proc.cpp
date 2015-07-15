@@ -66,6 +66,7 @@ DataProcessThread::DataProcessThread(QObject *parent) :
     connect(plot_process, SIGNAL(error(QProcess::ProcessError)), this, SLOT(process_error(QProcess::ProcessError)));
     connect(plot_process, SIGNAL(readyReadStandardOutput()), this, SLOT(process_readyreadoutput()));
     connect(plot_process, SIGNAL(finished(int,QProcess::ExitStatus)), this, SLOT(process_finished(int,QProcess::ExitStatus)));
+    connect(this, SIGNAL(terminate_plot_process()), plot_process, SLOT(terminate()));
 
     connect(this, SIGNAL(send_to_plot2pdf()), this, SLOT(plot2pdf()));
 }
@@ -381,6 +382,8 @@ void DataProcessThread::process_started()
 void DataProcessThread::process_error(QProcess::ProcessError processerror)
 {
     qDebug() << "plot_process error = " << processerror << endl;
+    emit terminate_plot_process();
+    qDebug() << "terminate the failed plot process" << endl;
 }
 
 void DataProcessThread::process_readyreadoutput()
