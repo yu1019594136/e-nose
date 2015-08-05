@@ -125,14 +125,24 @@ void LogicControlThread::run()
                 if(clear_state == 1)
                 {
                     /* 打开气泵, 清洗蒸发室*/
+//                    magnetic_para.M1 = HIGH;
+//                    //magnetic_para.M1 = LOW;
+//                    //magnetic_para.M2 = HIGH;
+//                    magnetic_para.M2 = LOW;
+//                    //magnetic_para.M3 = HIGH;
+//                    magnetic_para.M3 = LOW;
+//                    //magnetic_para.M4 = HIGH;
+//                    magnetic_para.M4 = LOW;
+
                     magnetic_para.M1 = HIGH;
                     //magnetic_para.M1 = LOW;
                     //magnetic_para.M2 = HIGH;
                     magnetic_para.M2 = LOW;
                     //magnetic_para.M3 = HIGH;
                     magnetic_para.M3 = LOW;
-                    //magnetic_para.M4 = HIGH;
-                    magnetic_para.M4 = LOW;
+                    magnetic_para.M4 = HIGH;
+                    //magnetic_para.M4 = LOW;
+
                     emit send_to_hard_magnetic(magnetic_para);
 
                     msleep(1000);
@@ -155,8 +165,8 @@ void LogicControlThread::run()
                     magnetic_para.M2 = LOW;
                     //magnetic_para.M3 = HIGH;
                     magnetic_para.M3 = LOW;
-                    magnetic_para.M4 = HIGH;
-                    //magnetic_para.M4 = LOW;
+                    //magnetic_para.M4 = HIGH;
+                    magnetic_para.M4 = LOW;
                     emit send_to_hard_magnetic(magnetic_para);
 
                     msleep(1000);
@@ -303,6 +313,24 @@ void LogicControlThread::run()
                 /* 开始蒸发计时 */
                 evaporation_timer->start(system_para_set.hold_time * 1000);
 
+                /* 改动电磁阀将MFC输出的气流导入到空气中，在开始采样时再将气流导入气路系统 */
+                magnetic_para.M1 = HIGH;
+                //magnetic_para.M1 = LOW;
+                magnetic_para.M2 = HIGH;
+                //magnetic_para.M2 = LOW;
+                //magnetic_para.M3 = HIGH;
+                magnetic_para.M3 = LOW;
+                //magnetic_para.M4 = HIGH;
+                magnetic_para.M4 = LOW;
+                emit send_to_hard_magnetic(magnetic_para);
+
+                /* 开始蒸发点击close时先把气泵打开 */
+                pump_para.pump_switch = HIGH;
+                pump_para.pump_duty = 125000;//全速运转,duty取值范围0-125000
+                pump_para.return_action_mode = SAMPLING;//由于是采样阶段，启泵定时时间达到后将关闭气泵，并封闭反应室
+                emit send_to_hard_pump(pump_para);
+
+
                 qDebug() << "close_clicked" << endl;
                 qDebug() << "evaporation timer start:" << system_para_set.hold_time << " s."<< endl;
             }
@@ -419,8 +447,8 @@ void LogicControlThread::run()
                         magnetic_para.M2 = LOW;
                         //magnetic_para.M3 = HIGH;
                         magnetic_para.M3 = LOW;
-                        magnetic_para.M4 = HIGH;
-                        //magnetic_para.M4 = LOW;
+                        //magnetic_para.M4 = HIGH;
+                        magnetic_para.M4 = LOW;
                         emit send_to_hard_magnetic(magnetic_para);
 
                         /* 呼出样本气体n秒 */
@@ -516,8 +544,8 @@ void LogicControlThread::run()
                     magnetic_para.M2 = LOW;
                     //magnetic_para.M3 = HIGH;
                     magnetic_para.M3 = LOW;
-                    magnetic_para.M4 = HIGH;
-                    //magnetic_para.M4 = LOW;
+                    //magnetic_para.M4 = HIGH;
+                    magnetic_para.M4 = LOW;
                     emit send_to_hard_magnetic(magnetic_para);
 
                     msleep(1000);
@@ -540,8 +568,8 @@ void LogicControlThread::run()
                     magnetic_para.M2 = LOW;
                     //magnetic_para.M3 = HIGH;
                     magnetic_para.M3 = LOW;
-                    //magnetic_para.M4 = HIGH;
-                    magnetic_para.M4 = LOW;
+                    magnetic_para.M4 = HIGH;
+                    //magnetic_para.M4 = LOW;
                     emit send_to_hard_magnetic(magnetic_para);
 
                     msleep(1000);
@@ -855,8 +883,8 @@ void LogicControlThread::recei_fro_GUI_user_button_action(USER_BUTTON_ENABLE use
         magnetic_para.M2 = LOW;
         //magnetic_para.M3 = HIGH;
         magnetic_para.M3 = LOW;
-        magnetic_para.M4 = HIGH;
-        //magnetic_para.M4 = LOW;
+        //magnetic_para.M4 = HIGH;
+        magnetic_para.M4 = LOW;
         emit send_to_hard_magnetic(magnetic_para);
 
         /* 打开气泵清洗 */

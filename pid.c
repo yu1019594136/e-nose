@@ -32,8 +32,8 @@ void pid_Init(void)
     Thermostatic[0].borderline[0] = 4000000;
     Thermostatic[0].borderline[1] = 4000000;
     Thermostatic[0].borderline[2] = 4000000;
-    Thermostatic[0].borderline[3] = 2500000;//1000000
-    Thermostatic[0].borderline[4] = 1000000;//500000
+    Thermostatic[0].borderline[3] = 3000000;//1000000
+    Thermostatic[0].borderline[4] = 1500000;//500000
 
     Thermostatic[1].preset_temp = 45.0;
     Thermostatic[1].borderline[0] = 900000;
