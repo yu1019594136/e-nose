@@ -70,9 +70,6 @@ OTHER_FILES += \
 RESOURCES += \
     lcd_backround.qrc
 
-win32:CONFIG(release, debug|release): LIBS += -L$$PWD/../../am335x_pru_package-master/pru_sw/app_loader/lib/release/ -lprussdrv
-else:win32:CONFIG(debug, debug|release): LIBS += -L$$PWD/../../am335x_pru_package-master/pru_sw/app_loader/lib/debug/ -lprussdrv
-else:unix: LIBS += -L$$PWD/../../am335x_pru_package-master/pru_sw/app_loader/lib/ -lprussdrv
 
-INCLUDEPATH += $$PWD/../../am335x_pru_package-master/pru_sw/app_loader/include
-DEPENDPATH += $$PWD/../../am335x_pru_package-master/pru_sw/app_loader/include
+
+unix|win32: LIBS += -lprussdrvd
