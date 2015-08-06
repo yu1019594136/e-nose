@@ -88,6 +88,15 @@ signals:
     /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
     void send_to_dataproc_reset_memory();
 
+    /* 该信号将驱使逻辑线程开启全速加热，并开始进行温度数据记录，全速加热将根据信号中的stop_temp自动停止 */
+    void start_heat_high_speed(double stop_temp);
+
+    /* 开始记录温度数据 */
+    void start_record_temp();
+
+    /* 采样完成后，停止记录温度数据 */
+    void stop_record_temp();
+
 public slots:
     /* 处理来自硬件线程预热完成的信号 */
     void recei_fro_hardware_preheat_done();
