@@ -61,15 +61,14 @@ void HardWareControlThread::run()
         /* 开启全速加热，全速加热将根据信号中的stop_temp自动停止 */
         if(start_heat_high_speed)
         {
-            if(temp_float > stop_temp)
+            if(temp_float > stop_temp * 1.0)
             {
                 /* 停止全速加热 */
                 set_pwm_duty(&pwm_9_42_zhenfashi, 0);
 
+                start_heat_high_speed = false;
                 qDebug() << "high speed heat stop!" << endl;
             }
-
-            start_heat_high_speed = false;
         }
 
         /* 开始进行温度数据记录 */
@@ -252,7 +251,7 @@ void HardWareControlThread::beep_timeout()
     }
 }
 
-void HardWareControlThread::recei_fro_logic_start_heat_high_speed(double stop_temp_para)
+void HardWareControlThread::recei_fro_logic_start_heat_high_speed(int stop_temp_para)
 {
     stop_temp = stop_temp_para;
 
@@ -291,8 +290,11 @@ void HardWareControlThread::recei_fro_logic_start_record_temp()
 void HardWareControlThread::recei_fro_logic_stop_record_temp()
 {
     flag_record_temp = false;
+    qDebug() << "stop_record_temp" << endl;
 
     /* 关闭文件句柄 */
     if(fp_record_temp)
         fclose(fp_record_temp);
+
+    fp_record_temp = NULL;
 }

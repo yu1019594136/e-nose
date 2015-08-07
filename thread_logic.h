@@ -89,7 +89,7 @@ signals:
     void send_to_dataproc_reset_memory();
 
     /* 该信号将驱使逻辑线程开启全速加热，并开始进行温度数据记录，全速加热将根据信号中的stop_temp自动停止 */
-    void start_heat_high_speed(double stop_temp);
+    void start_heat_high_speed(int stop_temp);
 
     /* 开始记录温度数据 */
     void start_record_temp();

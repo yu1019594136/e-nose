@@ -69,7 +69,7 @@ typedef struct{
     unsigned int exhale_wait_time[5];
     unsigned int hale_count;
 
-    double stop_temp;       //停止全速加热时的温度
+    int stop_temp;       //停止全速加热时的温度
 } SYSTEM_PARA_SET;
 
 enum SAMPLE_STYLE{
