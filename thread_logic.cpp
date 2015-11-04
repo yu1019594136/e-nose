@@ -357,6 +357,12 @@ void LogicControlThread::run()
                 pushButton_state.pushButton_clear = false;
                 emit send_to_GUI_pushButton_state(pushButton_state);
 
+                /* 开启全速加热 */
+                emit start_heat_high_speed(system_para_set.stop_temp);
+
+                /* 开始记录温度数据 */
+                emit start_record_temp();
+
                 /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
                 sample_para.sample_time = system_para_set.sample_time;//单位s, 每个通道的采样时间长度
@@ -479,18 +485,19 @@ void LogicControlThread::run()
                         }
                         else//否则等待采样时间到达后进入下一个系统状态
                         {
-                            //nothing;
                             hale_state = 0;
                             pwm_state = 0;
                             hale_state_change = false;
 
                             qDebug() << "hale_count = 0, hale sample done!" << endl;
+
                         }
                     }
                 }
             }
             else
             {
+                /* 采样完成后，本段代码被循环执行 */
                 //qDebug() << "hale_count = 0, hale sample done!" << endl;
             }
         }
@@ -783,6 +790,9 @@ void LogicControlThread::close_pump_and_reac()
 /* 接收来自数据处理线程的采样完成信号 */
 void LogicControlThread::recei_fro_dataproc_sample_done()
 {
+    /* 采样完成后，停止记录温度数据 */
+    emit stop_record_temp();
+
     /* 切换到下一个状态 */
     system_state = CLEAR;
     operation_flag.sampling_flag = AL_SET;
@@ -825,6 +835,8 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
         qDebug("system_para_set.exhale_wait_time[%d] = %d\n\n", i, system_para_set.exhale_wait_time[i]);
     }
 
+    qDebug("system_para_set.stop_temp = %d\n", system_para_set.stop_temp);
+
     /* 记录参数到txt文件 */
     QDateTime datetime = QDateTime::currentDateTime();
 
@@ -858,6 +870,8 @@ void LogicControlThread::recei_fro_GUI_system_para_set(SYSTEM_PARA_SET system_pa
         fprintf(fp_para, "system_para_set.exhale_time[%d] =\t%d\n", i, system_para_set.exhale_time[i]);
         fprintf(fp_para, "system_para_set.exhale_wait_time[%d] =\t%d\n\n", i, system_para_set.exhale_wait_time[i]);
     }
+
+    fprintf(fp_para, "system_para_set.stop_temp =\t%d\n", system_para_set.stop_temp);
 
     fclose(fp_para);
     fp_para = NULL;

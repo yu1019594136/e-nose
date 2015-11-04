@@ -174,6 +174,9 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
         fscanf(fp_default_para, "system_para_set.exhale_wait_time[3] =\t%d\n\n", &temp_uint);
         ui->spinBox_21->setValue(temp_uint);
 
+        fscanf(fp_default_para, "system_para_set.stop_temp =\t%d\n\n", &temp_int);
+        ui->spinBox_22->setValue(temp_int);
+
         qDebug("use the para in file default_config_para.txt.\n");
 
         fclose(fp_default_para);
@@ -254,6 +257,13 @@ MainWindow::MainWindow(QWidget *parent) :QMainWindow(parent), ui(new Ui::MainWin
 
     /* 释放两块内存块，将两个指针清零，发送信号给plot_widget对象，执行一次空指针绘图 */
     connect(logic_thread, SIGNAL(send_to_dataproc_reset_memory()), dataprocess_thread, SLOT(recei_from_logic_reset_memory()), Qt::QueuedConnection);
+
+    /* 接收到来自逻辑线程的信号后驱使逻辑线程开启全速加热，并开始进行温度数据记录，全速加热将根据信号中的stop_temp自动停止 */
+    connect(logic_thread, SIGNAL(start_heat_high_speed(int)), hardware_thread, SLOT(recei_fro_logic_start_heat_high_speed(int)), Qt::QueuedConnection);
+
+    /*  */
+    connect(logic_thread, SIGNAL(start_record_temp()), hardware_thread, SLOT(recei_fro_logic_start_record_temp()), Qt::QueuedConnection);
+    connect(logic_thread, SIGNAL(stop_record_temp()), hardware_thread, SLOT(recei_fro_logic_stop_record_temp()), Qt::QueuedConnection);
 
     hardware_thread->start();
     dataprocess_thread->start();
@@ -571,6 +581,8 @@ void MainWindow::on_pushButton_al_set_clicked()
     system_para_set.exhale_wait_time[3] = ui->spinBox_21->value();
 
     system_para_set.hale_count = ui->spinBox->value();
+
+    system_para_set.stop_temp = ui->spinBox_22->value();
 
     emit send_to_logic_system_para_set(system_para_set);
 }

@@ -1,5 +1,6 @@
 #include "thread_hardware.h"
 #include <QDebug>
+#include <QDateTime>
 
 /* 硬件相关接口 */
 #include "HW_interface.h"
@@ -27,7 +28,8 @@ HardWareControlThread::HardWareControlThread(QObject *parent) :
     connect(beep_timer, SIGNAL(timeout()), this, SLOT(beep_timeout()));
 
     stopped = false;
-
+    start_heat_high_speed = false;
+    flag_record_temp = false;
 }
 
 void HardWareControlThread::run()
@@ -48,19 +50,6 @@ void HardWareControlThread::run()
         temp_float = DS18B20_Get_TempFloat("28-0000025ff821");
         realtime_info.ds18b20_temp = QString::number(temp_float, 'f', 3);//将数字的浮点数转化成字符串，精度小数点后3位
 
-//        /* 检测温度是否稳定 */
-//        if(temp_float < last_temp_float)
-//        {
-//            temp_stable = true;
-//            qDebug() << "temp_stable = true" << endl;
-//        }
-//        else
-//        {
-//            last_temp_float = temp_float;
-//            temp_stable = false;
-//            //qDebug() << "temp_stable = false" << endl;
-//        }
-
         sht21_get_temp_string(temp_str);
         realtime_info.sht21_temp = temp_str;
 
@@ -69,8 +58,24 @@ void HardWareControlThread::run()
 
         emit send_to_GUI_realtime_info_update(realtime_info);
 
-//        qDebug() << "thermostat.wait_temp_stable = " << thermostat.wait_temp_stable << endl;
-//        qDebug() << "temp_stable = " << temp_stable << endl;
+        /* 开启全速加热，全速加热将根据信号中的stop_temp自动停止 */
+        if(start_heat_high_speed)
+        {
+            if(temp_float > stop_temp * 1.0)
+            {
+                /* 停止全速加热 */
+                set_pwm_duty(&pwm_9_42_zhenfashi, 0);
+
+                start_heat_high_speed = false;
+                qDebug() << "high speed heat stop!" << endl;
+            }
+        }
+
+        /* 开始进行温度数据记录 */
+        if(flag_record_temp)
+        {
+            fprintf(fp_record_temp, "%f\n", temp_float);
+        }
 
         /* 恒温控制 **&& ((thermostat.wait_temp_stable && temp_stable) || !thermostat.wait_temp_stable )****************************************/
         if(thermostat.thermo_switch == START)//开始恒温
@@ -244,4 +249,52 @@ void HardWareControlThread::beep_timeout()
         beep_timer->stop();
         Beep_Switch(LOW);
     }
+}
+
+void HardWareControlThread::recei_fro_logic_start_heat_high_speed(int stop_temp_para)
+{
+    stop_temp = stop_temp_para;
+
+    /* 开启全速加热 */
+    set_pwm_duty(&pwm_9_42_zhenfashi, 10000000);
+
+    qDebug() << "start high speed heat! stop high speed heat at " << stop_temp << endl;
+
+    start_heat_high_speed = true;
+}
+
+void HardWareControlThread::recei_fro_logic_start_record_temp()
+{
+    flag_record_temp = true;
+
+    QDateTime datetime = QDateTime::currentDateTime();
+    QString filepath = datetime.toString("yyyy.MM.dd-hh_mm_ss_") + "temp_record.txt";
+    char *filename;
+    QByteArray ba;
+
+    ba = filepath.toLatin1();
+    filename = ba.data();
+
+    if((fp_record_temp = fopen(filename, "w")) != NULL)
+    {
+        qDebug() << "open temp record file success, start to record temp!" << endl;
+    }
+    else
+    {
+        qDebug() << "open temp record file failed! temp recording cancle!" << endl;
+        flag_record_temp = false;
+    }
+}
+
+/* 采样完成后，停止记录温度数据 */
+void HardWareControlThread::recei_fro_logic_stop_record_temp()
+{
+    flag_record_temp = false;
+    qDebug() << "stop_record_temp" << endl;
+
+    /* 关闭文件句柄 */
+    if(fp_record_temp)
+        fclose(fp_record_temp);
+
+    fp_record_temp = NULL;
 }

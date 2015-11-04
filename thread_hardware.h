@@ -31,6 +31,13 @@ private:
     int flag_inform_duty_0;
 
     QTimer *beep_timer;//鸣叫鸣叫定时控制
+
+    bool start_heat_high_speed;//该标志表示开启全速加热，并开始进行温度数据记录，全速加热将根据信号中的stop_temp自动停止
+    int stop_temp;
+
+    bool flag_record_temp;
+    FILE *fp_record_temp;
+
 //    QTimer *pump_timer;//气泵开启时间
 //    QTimer *evaporation_timer;//定时蒸发时间
 
@@ -68,6 +75,15 @@ public slots:
 
     /* 处理来自逻辑控制线程的电磁阀控制信号 */
     void recei_fro_logic_magnetic(MAGNETIC magnetic_para);
+
+    /* 接收到来自逻辑线程的信号后驱使逻辑线程开启全速加热，并开始进行温度数据记录，全速加热将根据信号中的stop_temp自动停止 */
+    void recei_fro_logic_start_heat_high_speed(int stop_temp_para);
+
+    /* 开始记录温度数据 */
+    void recei_fro_logic_start_record_temp();
+
+    /* 采样完成后，停止记录温度数据 */
+    void recei_fro_logic_stop_record_temp();
 
 private slots:
     /* 蜂鸣器定时溢出 */
