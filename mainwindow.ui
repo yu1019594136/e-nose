@@ -47,7 +47,7 @@
      <enum>Qt::LeftToRight</enum>
     </property>
     <property name="currentIndex">
-     <number>4</number>
+     <number>3</number>
     </property>
     <property name="elideMode">
      <enum>Qt::ElideMiddle</enum>
@@ -894,13 +894,16 @@
        <rect>
         <x>80</x>
         <y>40</y>
-        <width>391</width>
+        <width>404</width>
         <height>171</height>
        </rect>
       </property>
       <layout class="QGridLayout" name="gridLayout">
        <item row="4" column="2">
         <widget class="QSpinBox" name="spinBox_19">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>15</number>
          </property>
@@ -908,6 +911,9 @@
        </item>
        <item row="1" column="2">
         <widget class="QSpinBox" name="spinBox_5">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>15</number>
          </property>
@@ -915,6 +921,9 @@
        </item>
        <item row="3" column="3">
         <widget class="QSpinBox" name="spinBox_12">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>1</number>
          </property>
@@ -922,6 +931,9 @@
        </item>
        <item row="3" column="4">
         <widget class="QSpinBox" name="spinBox_13">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>12</number>
          </property>
@@ -929,6 +941,9 @@
        </item>
        <item row="3" column="2">
         <widget class="QSpinBox" name="spinBox_11">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>15</number>
          </property>
@@ -939,6 +954,9 @@
          <property name="layoutDirection">
           <enum>Qt::LeftToRight</enum>
          </property>
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>12</number>
          </property>
@@ -946,6 +964,9 @@
        </item>
        <item row="1" column="0">
         <widget class="QSpinBox" name="spinBox_2">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>1</number>
          </property>
@@ -953,6 +974,9 @@
        </item>
        <item row="2" column="3">
         <widget class="QSpinBox" name="spinBox_8">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="singleStep">
           <number>1</number>
          </property>
@@ -963,6 +987,9 @@
        </item>
        <item row="3" column="0">
         <widget class="QSpinBox" name="spinBox_10">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>1</number>
          </property>
@@ -970,6 +997,9 @@
        </item>
        <item row="2" column="0">
         <widget class="QSpinBox" name="spinBox_6">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>1</number>
          </property>
@@ -977,6 +1007,9 @@
        </item>
        <item row="1" column="4">
         <widget class="QSpinBox" name="spinBox_3">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>12</number>
          </property>
@@ -984,6 +1017,9 @@
        </item>
        <item row="2" column="2">
         <widget class="QSpinBox" name="spinBox_7">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>15</number>
          </property>
@@ -991,6 +1027,9 @@
        </item>
        <item row="1" column="3">
         <widget class="QSpinBox" name="spinBox_4">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>4</number>
          </property>
@@ -1037,6 +1076,9 @@
        </item>
        <item row="4" column="3">
         <widget class="QSpinBox" name="spinBox_20">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>3</number>
          </property>
@@ -1044,6 +1086,9 @@
        </item>
        <item row="4" column="4">
         <widget class="QSpinBox" name="spinBox_21">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>12</number>
          </property>
@@ -1051,6 +1096,9 @@
        </item>
        <item row="4" column="0">
         <widget class="QSpinBox" name="spinBox_18">
+         <property name="maximum">
+          <number>99999</number>
+         </property>
          <property name="value">
           <number>1</number>
          </property>
