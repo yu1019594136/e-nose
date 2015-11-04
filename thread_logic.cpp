@@ -517,7 +517,7 @@ void LogicControlThread::run()
 
                 /* 开始采样 */
                 sample_para.sample_freq = system_para_set.sample_freq;//单位Hz,每个通道的采样频率
-                sample_para.sample_time = system_para_set.evapor_clear_time;//单位s, 每个通道的采样时间长度
+                sample_para.sample_time = system_para_set.reac_clear_time;//单位s, 每个通道的采样时间长度
                 sample_para.filename_prefix = system_para_set.liquor_brand + "_clear_data";//数据文件路径以及文件名前缀,
                 sample_para.sample_inform_flag = false;
                 sample_para.plot_to_pdf = true;
